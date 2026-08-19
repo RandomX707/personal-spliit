@@ -55,7 +55,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "content-disposition": "^2.0.1",
-    "dayjs": "^1.11.21",
+    "dayjs": "^1.11.22",
     "embla-carousel-react": "^8.6.0",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^1.17.0",
