@@ -4,6 +4,12 @@ Spliit is a free and open source alternative to Splitwise. You can either use th
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fspliit-app%2Fspliit&project-name=my-spliit-instance&repository-name=my-spliit-instance&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D&)
 
+## Personal Deployment
+
+This fork is prepared for personal Vercel deployment with PostgreSQL and INR as
+the default currency for new groups. See [DEPLOYMENT.md](DEPLOYMENT.md) for the
+exact deployment steps.
+
 ## Features
 
 - [x] Create a group and share it with friends
