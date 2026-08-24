@@ -1,10 +1,8 @@
 import { ApplePwaSplash } from '@/app/apple-pwa-splash'
 import { AppShell } from '@/components/app-shell'
-import { LocaleSwitcher } from '@/components/locale-switcher'
 import { ProgressBar } from '@/components/progress-bar'
 import { ServiceWorkerRegistration } from '@/components/service-worker-registration'
 import { ThemeProvider } from '@/components/theme-provider'
-import { ThemeToggle } from '@/components/theme-toggle'
 import { Toaster } from '@/components/ui/toaster'
 import { appConfig } from '@/config/app'
 import { Analytics } from '@/lib/analytics/analytics'
@@ -60,14 +58,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#0f172a',
+  themeColor: '#4f46e5',
 }
 
 function Content({ children }: { children: React.ReactNode }) {
   return (
     <TRPCProvider>
       <AppShell>{children}</AppShell>
-      <footer className="border-t bg-card/70 px-4 py-6 text-xs text-muted-foreground lg:pl-72 xl:pl-80">
+      <footer className="border-t bg-card/70 px-4 py-6 text-xs text-muted-foreground lg:pl-[17rem] xl:pl-72">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <span>
             {appConfig.name} is a private fork built from the open-source Spliit
@@ -104,7 +102,7 @@ export default async function RootLayout({
       dir={['ar', 'he'].includes(locale) ? 'rtl' : 'ltr'}
       suppressHydrationWarning
     >
-      <ApplePwaSplash icon="/logo-with-text.png" color="#0f172a" />
+      <ApplePwaSplash icon="/logo-with-text.png" color="#4f46e5" />
       <body className="min-h-[100dvh] bg-background antialiased">
         <NextIntlClientProvider messages={messages}>
           {/* Rendered inside the provider because it reads translations via
@@ -121,10 +119,6 @@ export default async function RootLayout({
               <Suspense>
                 <ProgressBar />
               </Suspense>
-              <div className="fixed right-3 top-3 z-50 hidden gap-1 lg:flex">
-                <LocaleSwitcher />
-                <ThemeToggle />
-              </div>
               <Content>{children}</Content>
             </ThemeProvider>
           </Analytics>

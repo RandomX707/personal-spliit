@@ -1,9 +1,9 @@
-# SplitMate Personal Deployment
+# LEDGER Personal Deployment
 
-This repository is prepared for a personal SplitMate deployment on Vercel with
+This repository is prepared for a personal LEDGER deployment on Vercel with
 PostgreSQL. It keeps the upstream Spliit financial engine and link-based group
-access model intact, while branding and personal dashboard screens are customized
-for SplitMate. INR is the default currency for new groups.
+access model intact, while branding and personal Overview screens are customized
+for LEDGER. INR is the default currency for new groups.
 
 Do not enable OpenAI, receipt extraction, S3, or custom authentication yet. Those
 features are optional and stay disabled while their environment flags are unset.
@@ -17,7 +17,7 @@ Browser
 Vercel
   |
   v
-Next.js / SplitMate
+Next.js / LEDGER
   |
   v
 Prisma
@@ -42,7 +42,7 @@ POSTGRES_URL_NON_POOLING=<direct/non-pooled PostgreSQL connection string>
 DEFAULT_CURRENCY_CODE=INR
 ```
 
-`BASE_URL` is optional on Vercel because SplitMate falls back to
+`BASE_URL` is optional on Vercel because LEDGER falls back to
 `https://$VERCEL_URL`. After you have a stable production URL, you can set:
 
 ```env
@@ -75,7 +75,7 @@ S3_UPLOAD_REGION=
 
 ## Database Migrations
 
-SplitMate uses Prisma migrations in `prisma/migrations`.
+LEDGER uses Prisma migrations in `prisma/migrations`.
 
 The current package scripts run this during dependency installation:
 

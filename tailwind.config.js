@@ -50,6 +50,16 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        surface: {
+          DEFAULT: 'hsl(var(--surface))',
+          elevated: 'hsl(var(--surface-elevated))',
+        },
+        positive: 'hsl(var(--positive))',
+        negative: 'hsl(var(--negative))',
+        warning: 'hsl(var(--warning))',
+        balance: {
+          neutral: 'hsl(var(--balance-neutral))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

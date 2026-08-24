@@ -1,6 +1,7 @@
 export const appConfig = {
-  name: 'SplitMate',
-  tagline: 'Expenses made simple.',
+  name: 'LEDGER',
+  shortName: 'LEDGER',
+  tagline: 'Shared money, made clear.',
   description:
     'A private, mobile-first expense sharing app for friends, groups, receipts, balances, and settlements.',
   defaultCurrency: {
@@ -8,6 +9,7 @@ export const appConfig = {
     symbol: '₹',
   },
   defaultLocale: 'en-IN',
+  timezone: 'Asia/Kolkata',
   timeZone: 'Asia/Kolkata',
   support: {
     upstreamSource: 'https://github.com/spliit-app/spliit',

@@ -1,5 +1,5 @@
 /*
- * SplitMate service worker.
+ * LEDGER service worker.
  *
  * A lightweight, dependency-free service worker that caches static assets to
  * save bandwidth and improve load performance, while always serving fresh data
@@ -18,9 +18,9 @@
  */
 
 const CACHE_VERSION = 'v1'
-const PRECACHE = `splitmate-precache-${CACHE_VERSION}`
-const RUNTIME = `splitmate-runtime-${CACHE_VERSION}`
-const IMAGE_CACHE = `splitmate-images-${CACHE_VERSION}`
+const PRECACHE = `ledger-precache-${CACHE_VERSION}`
+const RUNTIME = `ledger-runtime-${CACHE_VERSION}`
+const IMAGE_CACHE = `ledger-images-${CACHE_VERSION}`
 
 const OFFLINE_URL = '/offline.html'
 

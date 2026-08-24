@@ -18,7 +18,7 @@ export function createUpiPaymentUri({
   payeeName,
   amountMinor,
   currencyCode = 'INR',
-  note = 'SplitMate settlement',
+  note = 'LEDGER settlement',
 }: UpiPaymentInput) {
   if (!isPlausibleUpiId(upiId)) {
     throw new Error('Invalid UPI ID')

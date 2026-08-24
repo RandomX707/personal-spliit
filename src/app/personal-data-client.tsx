@@ -1,7 +1,11 @@
 'use client'
 
 import { getRecentGroups } from '@/app/groups/recent-groups-helpers'
-import { identityStorageKey, parseStoredIdentity } from '@/lib/identity'
+import {
+  identityStorageKey,
+  legacyIdentityStorageKey,
+  parseStoredIdentity,
+} from '@/lib/identity'
 import { trpc } from '@/trpc/client'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -21,7 +25,8 @@ export function usePersonalDashboardData() {
       }),
     )
     const identity = parseStoredIdentity(
-      localStorage.getItem(identityStorageKey),
+      localStorage.getItem(identityStorageKey) ??
+        localStorage.getItem(legacyIdentityStorageKey),
     )
     setStoredName(identity.displayName || null)
   }, [])

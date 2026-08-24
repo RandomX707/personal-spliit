@@ -1,13 +1,12 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+  InitialAvatar,
+  PageHeader,
+  SectionHeader,
+} from '@/components/ledger-ui'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -21,21 +20,54 @@ import { useToast } from '@/components/ui/use-toast'
 import { appConfig } from '@/config/app'
 import { TrackPage } from '@/lib/analytics/track-page'
 import {
-  SplitMateIdentity,
+  LedgerIdentity,
   getFallbackIdentity,
   getInitials,
   identityStorageKey,
+  legacyIdentityStorageKey,
   parseStoredIdentity,
 } from '@/lib/identity'
 import { createUpiPaymentUri } from '@/lib/upi'
 import { isPlausibleUpiId } from '@/lib/upi-validation'
-import { ExternalLink, Save } from 'lucide-react'
+import {
+  Brain,
+  ExternalLink,
+  FileImage,
+  GitBranch,
+  Link2,
+  Save,
+  Smartphone,
+} from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import { FormEvent, useEffect, useState } from 'react'
 
+function SettingSection({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: React.ReactNode
+}) {
+  return (
+    <Card className="ledger-surface rounded-[1.5rem]">
+      <CardContent className="p-5">
+        <SectionHeader title={title} />
+        {description && (
+          <p className="mb-5 max-w-2xl text-sm leading-6 text-muted-foreground">
+            {description}
+          </p>
+        )}
+        {children}
+      </CardContent>
+    </Card>
+  )
+}
+
 export function SettingsClient() {
-  const [identity, setIdentity] = useState<SplitMateIdentity>(
+  const [identity, setIdentity] = useState<LedgerIdentity>(
     getFallbackIdentity(),
   )
   const [loaded, setLoaded] = useState(false)
@@ -43,14 +75,17 @@ export function SettingsClient() {
   const { toast } = useToast()
 
   useEffect(() => {
-    const stored = parseStoredIdentity(localStorage.getItem(identityStorageKey))
+    const stored = parseStoredIdentity(
+      localStorage.getItem(identityStorageKey) ??
+        localStorage.getItem(legacyIdentityStorageKey),
+    )
     setIdentity(stored)
     setLoaded(true)
   }, [])
 
-  function update<K extends keyof SplitMateIdentity>(
+  function update<K extends keyof LedgerIdentity>(
     key: K,
-    value: SplitMateIdentity[K],
+    value: LedgerIdentity[K],
   ) {
     setIdentity((current) => ({ ...current, [key]: value }))
   }
@@ -71,12 +106,10 @@ export function SettingsClient() {
         identity.avatarInitials || getInitials(identity.displayName || 'Me'),
     }
     localStorage.setItem(identityStorageKey, JSON.stringify(nextIdentity))
+    localStorage.removeItem(legacyIdentityStorageKey)
     setTheme(nextIdentity.theme)
     setIdentity(nextIdentity)
-    toast({
-      title: 'Identity saved',
-      description: 'Your SplitMate profile is stored on this device.',
-    })
+    toast({ title: 'Settings saved' })
   }
 
   const sampleUpiUri =
@@ -88,187 +121,213 @@ export function SettingsClient() {
           currencyCode: identity.preferredCurrency,
         })
       : null
+  const featureRows = [
+    { Icon: Smartphone, label: 'UPI settlements', status: 'Enabled' },
+    { Icon: FileImage, label: 'Receipt uploads', status: 'Optional' },
+    { Icon: Brain, label: 'AI receipt scanning', status: 'Optional' },
+    { Icon: Brain, label: 'AI category suggestions', status: 'Optional' },
+  ]
 
   return (
-    <main className="flex flex-col gap-6">
+    <main className="flex flex-col gap-7">
       <TrackPage path="/settings" />
-      <div>
-        <h1 className="text-3xl font-semibold tracking-normal">Settings</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Personal preferences for this browser and feature availability for
-          this deployment.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Personal"
+        title="Settings"
+        description="Control how LEDGER identifies you on this device, how payments are displayed, and which optional features are available."
+      />
 
       <form
         id="identity"
         onSubmit={submit}
-        className="grid gap-6 xl:grid-cols-[1fr_.8fr]"
+        className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]"
       >
-        <Card>
-          <CardHeader>
-            <CardTitle>My Identity</CardTitle>
-            <CardDescription>
-              This app keeps group access lightweight. Your profile is stored
-              locally and does not replace group participants.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="displayName">Display name</Label>
-              <Input
-                id="displayName"
-                value={identity.displayName}
-                placeholder="Your name"
-                disabled={!loaded}
-                onChange={(event) => update('displayName', event.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="avatarInitials">Avatar / initials</Label>
-              <Input
-                id="avatarInitials"
-                value={identity.avatarInitials}
-                placeholder="Auto from name"
-                maxLength={4}
-                disabled={!loaded}
-                onChange={(event) =>
-                  update('avatarInitials', event.target.value.toUpperCase())
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="preferredCurrency">Preferred currency</Label>
-              <Select
-                value={identity.preferredCurrency}
-                onValueChange={(value) => update('preferredCurrency', value)}
-              >
-                <SelectTrigger id="preferredCurrency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="INR">INR · ₹</SelectItem>
-                  <SelectItem value="USD">USD · $</SelectItem>
-                  <SelectItem value="EUR">EUR · €</SelectItem>
-                  <SelectItem value="GBP">GBP · £</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="upiId">UPI ID</Label>
-              <Input
-                id="upiId"
-                inputMode="email"
-                value={identity.upiId ?? ''}
-                placeholder="name@bank"
-                disabled={!loaded}
-                onChange={(event) => update('upiId', event.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="theme">Theme</Label>
-              <Select
-                value={identity.theme}
-                onValueChange={(value: SplitMateIdentity['theme']) => {
-                  update('theme', value)
-                  setTheme(value)
-                }}
-              >
-                <SelectTrigger id="theme">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="system">System</SelectItem>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" className="w-fit">
-              <Save className="mr-2 h-4 w-4" />
-              Save settings
-            </Button>
-          </CardContent>
-        </Card>
-
         <div className="grid gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Feature availability</CardTitle>
-              <CardDescription>
-                Optional capabilities degrade gracefully when their environment
-                variables are absent.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              <div className="flex justify-between gap-3">
-                <span>Default currency</span>
-                <strong>
-                  {appConfig.defaultCurrency.code} ·{' '}
-                  {appConfig.defaultCurrency.symbol}
-                </strong>
+          <SettingSection
+            title="Profile"
+            description="This browser-local profile personalizes LEDGER. It does not replace group participants or create an account."
+          >
+            <div className="grid gap-4 sm:grid-cols-[auto_1fr_160px] sm:items-end">
+              <InitialAvatar
+                name={identity.displayName || 'Me'}
+                avatar={identity.avatarInitials}
+                size="lg"
+              />
+              <div className="grid gap-2">
+                <Label htmlFor="displayName">Display name</Label>
+                <Input
+                  id="displayName"
+                  value={identity.displayName}
+                  placeholder="Your name"
+                  disabled={!loaded}
+                  className="rounded-2xl"
+                  onChange={(event) =>
+                    update('displayName', event.target.value)
+                  }
+                />
               </div>
-              <div className="flex justify-between gap-3">
-                <span>Locale</span>
-                <strong>{appConfig.defaultLocale}</strong>
+              <div className="grid gap-2">
+                <Label htmlFor="avatarInitials">Initials</Label>
+                <Input
+                  id="avatarInitials"
+                  value={identity.avatarInitials}
+                  placeholder="Auto"
+                  maxLength={4}
+                  disabled={!loaded}
+                  className="rounded-2xl"
+                  onChange={(event) =>
+                    update('avatarInitials', event.target.value.toUpperCase())
+                  }
+                />
               </div>
-              <div className="flex justify-between gap-3">
-                <span>Timezone</span>
-                <strong>{appConfig.timeZone}</strong>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span>UPI settlements</span>
-                <strong>Enabled</strong>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span>AI receipt scanning</span>
-                <strong>Optional</strong>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </SettingSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>UPI preview</CardTitle>
-              <CardDescription>
-                Opening a UPI link never marks a balance as settled. You still
-                record the settlement manually after payment.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {sampleUpiUri ? (
-                <Button asChild variant="outline">
+          <SettingSection
+            title="Identity"
+            description="Link profiles that represent the same person across different groups from a friend's detail page. Names are never used as financial identity keys."
+          >
+            <Button asChild variant="outline" className="rounded-2xl">
+              <Link href="/friends">
+                <Link2 className="mr-2 h-4 w-4" />
+                Manage linked people
+              </Link>
+            </Button>
+          </SettingSection>
+
+          <SettingSection title="Payments">
+            <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+              <div className="grid gap-2">
+                <Label htmlFor="upiId">Your UPI ID</Label>
+                <Input
+                  id="upiId"
+                  inputMode="email"
+                  value={identity.upiId ?? ''}
+                  placeholder="name@bank"
+                  disabled={!loaded}
+                  className="rounded-2xl"
+                  onChange={(event) => update('upiId', event.target.value)}
+                />
+                <p className="text-xs leading-5 text-muted-foreground">
+                  LEDGER checks only the format. It cannot verify that a UPI ID
+                  exists.
+                </p>
+              </div>
+              {sampleUpiUri && (
+                <Button asChild variant="outline" className="rounded-2xl">
                   <a href={sampleUpiUri}>
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    Test UPI app link
+                    Test UPI
                   </a>
                 </Button>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Add a display name and UPI ID to preview payment links.
-                </p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </SettingSection>
 
-          <Card id="about">
-            <CardHeader>
-              <CardTitle>About {appConfig.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <SettingSection title="Preferences">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-2">
+                <Label htmlFor="preferredCurrency">Default currency</Label>
+                <Select
+                  value={identity.preferredCurrency}
+                  onValueChange={(value) => update('preferredCurrency', value)}
+                >
+                  <SelectTrigger id="preferredCurrency" className="rounded-2xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="INR">INR · ₹</SelectItem>
+                    <SelectItem value="USD">USD · $</SelectItem>
+                    <SelectItem value="EUR">EUR · €</SelectItem>
+                    <SelectItem value="GBP">GBP · £</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="theme">Theme</Label>
+                <Select
+                  value={identity.theme}
+                  onValueChange={(value: LedgerIdentity['theme']) => {
+                    update('theme', value)
+                    setTheme(value)
+                  }}
+                >
+                  <SelectTrigger id="theme" className="rounded-2xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="system">System</SelectItem>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Locale</Label>
+                <div className="rounded-2xl border bg-muted px-3 py-2 text-sm font-semibold">
+                  {appConfig.defaultLocale}
+                </div>
+              </div>
+            </div>
+          </SettingSection>
+
+          <Button
+            type="submit"
+            className="h-12 w-fit rounded-2xl px-6 font-bold"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            Save settings
+          </Button>
+        </div>
+
+        <aside className="grid content-start gap-6">
+          <SettingSection title="Features">
+            <div className="grid gap-3 text-sm">
+              {featureRows.map(({ Icon, label, status }) => (
+                <div
+                  key={String(label)}
+                  className="flex items-center justify-between gap-3 rounded-2xl border bg-surface-elevated p-3"
+                >
+                  <span className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-primary" />
+                    {label}
+                  </span>
+                  <strong>{status}</strong>
+                </div>
+              ))}
+            </div>
+          </SettingSection>
+
+          <SettingSection title="About LEDGER">
+            <div className="space-y-4 text-sm leading-6 text-muted-foreground">
               <p>
-                {appConfig.name} is a private personal fork of Spliit. The
-                original open-source license and attribution are preserved.
+                LEDGER is a private personal expense-sharing app built on the
+                open-source Spliit foundation. The original license and
+                attribution are preserved.
               </p>
+              <div className="grid gap-2 text-foreground">
+                <div className="flex justify-between gap-3">
+                  <span>Default currency</span>
+                  <strong>
+                    {appConfig.defaultCurrency.code} ·{' '}
+                    {appConfig.defaultCurrency.symbol}
+                  </strong>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span>Timezone</span>
+                  <strong>{appConfig.timezone}</strong>
+                </div>
+              </div>
               <Link
                 href={appConfig.support.upstreamSource}
-                className="inline-flex items-center font-medium text-primary underline"
+                className="inline-flex items-center font-bold text-primary underline"
               >
-                View upstream project
+                <GitBranch className="mr-2 h-4 w-4" />
+                Open-source attribution
               </Link>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </SettingSection>
+        </aside>
       </form>
     </main>
   )

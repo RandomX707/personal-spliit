@@ -1,14 +1,8 @@
 'use client'
 
 import { saveRecentGroup } from '@/app/groups/recent-groups-helpers'
+import { InitialAvatar } from '@/components/ledger-ui'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -22,9 +16,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/components/ui/use-toast'
 import { RecurrenceRule, SplitMode } from '@/generated/prisma/browser'
 import { getCurrency } from '@/lib/currency'
-import { amountAsMinorUnits } from '@/lib/utils'
+import { amountAsMinorUnits, formatCurrency } from '@/lib/utils'
 import { trpc } from '@/trpc/client'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Check, ReceiptIndianRupee } from 'lucide-react'
+import { useLocale } from 'next-intl'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
@@ -48,6 +43,7 @@ export function DirectFriendExpenseClient({
   friendKey: string
 }) {
   const router = useRouter()
+  const locale = useLocale()
   const { toast } = useToast()
   const { data, isLoading, isLocalStorageReady, activeGroups } =
     usePersonalDashboardData()
@@ -111,10 +107,7 @@ export function DirectFriendExpenseClient({
     if (directGroup.status !== 'ready' || !friend) return
     const parsedAmount = Number(amount)
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      toast({
-        title: 'Enter a valid amount',
-        variant: 'destructive',
-      })
+      toast({ title: 'Enter a valid amount', variant: 'destructive' })
       return
     }
 
@@ -150,47 +143,90 @@ export function DirectFriendExpenseClient({
       },
     })
     await utils.personal.dashboard.invalidate()
-    toast({
-      title: 'Expense added',
-      description: `${title} was split with ${friend.name}.`,
-    })
+    toast({ title: 'Expense added' })
     router.push(`/groups/${directGroup.groupId}/expenses/${expenseId}/edit`)
   }
 
   const loading =
     isLoading || !isLocalStorageReady || directGroup.status === 'loading'
+  const parsedAmount = Number(amount)
+  const eachShare =
+    Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount / 2 : 0
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <Button asChild variant="ghost" className="w-fit px-0">
+      <Button asChild variant="ghost" className="w-fit rounded-2xl px-0">
         <Link href={`/friends/${encodeURIComponent(friendKey)}`}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           {friend?.name ?? 'Friend'}
         </Link>
       </Button>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Add friend expense</CardTitle>
-          <CardDescription>
-            Split a direct expense without manually creating a group.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="grid gap-4">
-              <Skeleton className="h-10 rounded-lg" />
-              <Skeleton className="h-10 rounded-lg" />
-              <Skeleton className="h-10 rounded-lg" />
-            </div>
-          ) : directGroup.status === 'error' || !friend?.personId ? (
-            <p className="text-sm text-destructive">
-              {directGroup.status === 'error'
-                ? directGroup.message
-                : 'This friend needs a stable person identity before direct expenses can be added.'}
+      <section className="ledger-surface overflow-hidden rounded-[2rem] p-5 sm:p-7">
+        <div className="mb-7 flex items-center gap-4">
+          {friend ? (
+            <InitialAvatar name={friend.name} avatar={friend.avatar} />
+          ) : (
+            <Skeleton className="h-11 w-11 rounded-full" />
+          )}
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
+              New expense
             </p>
-          ) : directGroup.status === 'ready' ? (
-            <form onSubmit={submit} className="grid gap-4">
+            <h1 className="text-3xl font-black tracking-[-0.03em]">
+              {friend ? `With ${friend.name}` : 'Friend expense'}
+            </h1>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="grid gap-4">
+            <Skeleton className="h-24 rounded-3xl" />
+            <Skeleton className="h-12 rounded-2xl" />
+            <Skeleton className="h-12 rounded-2xl" />
+          </div>
+        ) : directGroup.status === 'error' || !friend?.personId ? (
+          <p className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+            {directGroup.status === 'error'
+              ? directGroup.message
+              : 'This friend needs a stable identity before direct expenses can be added.'}
+          </p>
+        ) : directGroup.status === 'ready' ? (
+          <form onSubmit={submit} className="grid gap-5">
+            <div className="rounded-[1.5rem] border bg-surface-elevated p-5">
+              <Label
+                htmlFor="direct-amount"
+                className="text-xs uppercase tracking-[0.18em]"
+              >
+                Amount
+              </Label>
+              <div className="mt-3 flex items-center gap-3">
+                <span className="text-4xl font-black text-muted-foreground">
+                  ₹
+                </span>
+                <Input
+                  id="direct-amount"
+                  required
+                  inputMode="decimal"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="0"
+                  value={amount}
+                  className="h-16 border-0 bg-transparent px-0 text-5xl font-black tracking-[-0.04em] shadow-none focus-visible:ring-0"
+                  onChange={(event) => setAmount(event.target.value)}
+                />
+              </div>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Equal split:{' '}
+                {eachShare > 0
+                  ? formatCurrency(getCurrency('INR'), eachShare * 100, locale)
+                  : '₹0.00'}{' '}
+                each
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="direct-title">Description</Label>
                 <Input
@@ -199,27 +235,9 @@ export function DirectFriendExpenseClient({
                   minLength={2}
                   placeholder="Dinner"
                   value={title}
+                  className="rounded-2xl"
                   onChange={(event) => setTitle(event.target.value)}
                 />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="direct-amount">Amount</Label>
-                <div className="flex items-center gap-2">
-                  <span className="rounded-md border bg-muted px-3 py-2 text-sm">
-                    ₹
-                  </span>
-                  <Input
-                    id="direct-amount"
-                    required
-                    inputMode="decimal"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    placeholder="1200"
-                    value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
-                  />
-                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="direct-paid-by">Paid by</Label>
@@ -227,7 +245,7 @@ export function DirectFriendExpenseClient({
                   value={paidBy}
                   onValueChange={(value: 'me' | 'friend') => setPaidBy(value)}
                 >
-                  <SelectTrigger id="direct-paid-by">
+                  <SelectTrigger id="direct-paid-by" className="rounded-2xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -236,18 +254,27 @@ export function DirectFriendExpenseClient({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
-                Split equally between you and {friend.name}. Each person pays
-                half.
-              </div>
-              <Button type="submit" disabled={createExpense.isPending}>
-                <Save className="mr-2 h-4 w-4" />
-                Save expense
-              </Button>
-            </form>
-          ) : null}
-        </CardContent>
-      </Card>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-2xl border bg-surface-elevated p-4 text-sm text-muted-foreground">
+              <ReceiptIndianRupee className="h-4 w-4 text-primary" />
+              <span>
+                Split equally between you and {friend.name}. LEDGER keeps the
+                hidden direct group out of your way.
+              </span>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={createExpense.isPending}
+              className="h-12 rounded-2xl text-base font-bold"
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Add expense
+            </Button>
+          </form>
+        ) : null}
+      </section>
     </main>
   )
 }

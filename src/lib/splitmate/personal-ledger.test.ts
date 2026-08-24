@@ -69,7 +69,7 @@ function group(overrides: Partial<LedgerGroup>): LedgerGroup {
   }
 }
 
-describe('SplitMate personal ledger', () => {
+describe('LEDGER personal ledger', () => {
   it('aggregates a four-person equal expense without losing money', () => {
     const dashboard = buildPersonalDashboard(
       [group({ expenses: [expense({ amount: 240000 })] })],

@@ -6,11 +6,12 @@ import {
   getRecentGroups,
   getStarredGroups,
 } from '@/app/groups/recent-groups-helpers'
+import { EmptyState, PageHeader, SectionHeader } from '@/components/ledger-ui'
 import { Button } from '@/components/ui/button'
 import { getGroups } from '@/lib/api'
 import { trpc } from '@/trpc/client'
 import { AppRouterOutput } from '@/trpc/routers/_app'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Plus, WalletCards } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { PropsWithChildren, useEffect, useState } from 'react'
@@ -111,10 +112,10 @@ function RecentGroupList_({
   if (isLoading || !data) {
     return (
       <GroupsPage reload={refreshGroupsFromStorage}>
-        <p>
-          <Loader2 className="w-4 m-4 mr-2 inline animate-spin" />{' '}
+        <div className="ledger-surface rounded-[1.5rem] p-6 text-sm text-muted-foreground">
+          <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
           {t('loadingRecent')}
-        </p>
+        </div>
       </GroupsPage>
     )
   }
@@ -122,15 +123,16 @@ function RecentGroupList_({
   if (data.groups.length === 0) {
     return (
       <GroupsPage reload={refreshGroupsFromStorage}>
-        <div className="text-sm space-y-2">
-          <p>{t('NoRecent.description')}</p>
-          <p>
-            <Button variant="link" asChild className="-m-4">
-              <Link href={`/groups/create`}>{t('NoRecent.create')}</Link>
-            </Button>{' '}
-            {t('NoRecent.orAsk')}
-          </p>
-        </div>
+        <EmptyState
+          icon={WalletCards}
+          title="Create a group for anything shared."
+          description="Trips, rent, weekend dinners, subscriptions, and everything in between."
+          action={
+            <Button asChild className="rounded-2xl">
+              <Link href="/groups/create">Create group</Link>
+            </Button>
+          }
+        />
       </GroupsPage>
     )
   }
@@ -157,8 +159,8 @@ function RecentGroupList_({
       <GlobalBalanceCard groups={groups} />
 
       {visibleStarredGroupInfo.length > 0 && (
-        <>
-          <h2 className="mb-2">{t('starred')}</h2>
+        <section>
+          <SectionHeader title="Pinned" />
           <GroupList
             groups={visibleStarredGroupInfo}
             groupDetails={visibleGroupDetails}
@@ -166,12 +168,12 @@ function RecentGroupList_({
             starredGroups={starredGroups}
             refreshGroupsFromStorage={refreshGroupsFromStorage}
           />
-        </>
+        </section>
       )}
 
       {visibleGroupInfo.length > 0 && (
-        <>
-          <h2 className="mt-6 mb-2">{t('recent')}</h2>
+        <section>
+          <SectionHeader title="Recent" />
           <GroupList
             groups={visibleGroupInfo}
             groupDetails={visibleGroupDetails}
@@ -179,12 +181,12 @@ function RecentGroupList_({
             starredGroups={starredGroups}
             refreshGroupsFromStorage={refreshGroupsFromStorage}
           />
-        </>
+        </section>
       )}
 
       {visibleArchivedGroupInfo.length > 0 && (
-        <>
-          <h2 className="mt-6 mb-2 opacity-50">{t('archived')}</h2>
+        <section className="opacity-70">
+          <SectionHeader title="Archived" />
           <div className="opacity-50">
             <GroupList
               groups={visibleArchivedGroupInfo}
@@ -194,7 +196,7 @@ function RecentGroupList_({
               refreshGroupsFromStorage={refreshGroupsFromStorage}
             />
           </div>
-        </>
+        </section>
       )}
     </GroupsPage>
   )
@@ -214,7 +216,7 @@ function GroupList({
   refreshGroupsFromStorage: () => void
 }) {
   return (
-    <ul className="grid gap-2 sm:grid-cols-2">
+    <ul className="grid gap-3 lg:grid-cols-2">
       {groups.map((group) => (
         <RecentGroupListCard
           key={group.id}
@@ -235,24 +237,25 @@ function GroupsPage({
   children,
   reload,
 }: PropsWithChildren<{ reload: () => void }>) {
-  const t = useTranslations('Groups')
   return (
-    <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <h1 className="font-bold text-2xl flex-1">
-          <Link href="/groups">{t('myGroups')}</Link>
-        </h1>
-        <div className="flex gap-2">
-          <AddGroupByUrlButton reload={reload} />
-          <Button asChild>
-            <Link href="/groups/create">
-              {/* <Plus className="w-4 h-4 mr-2" /> */}
-              {t('create')}
-            </Link>
-          </Button>
-        </div>
-      </div>
-      <div>{children}</div>
-    </>
+    <div className="flex flex-col gap-7">
+      <PageHeader
+        eyebrow="Shared spaces"
+        title="Groups"
+        description="Create a ledger for a trip, home, party, or anything you split together."
+        action={
+          <div className="flex gap-2">
+            <AddGroupByUrlButton reload={reload} />
+            <Button asChild className="rounded-2xl font-bold">
+              <Link href="/groups/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Create group
+              </Link>
+            </Button>
+          </div>
+        }
+      />
+      {children}
+    </div>
   )
 }

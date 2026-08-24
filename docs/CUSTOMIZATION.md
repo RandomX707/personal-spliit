@@ -1,167 +1,93 @@
-# SplitMate Customization
+# LEDGER Customization
 
 ## What Changed From Upstream Spliit
 
-- Visible product identity changed to SplitMate.
-- Central configuration added at `src/config/app.ts`.
-- Root page changed from a landing page to a personal dashboard.
-- Desktop sidebar and mobile bottom navigation added.
-- Friends, friend detail, global activity, and settings routes added.
-- Stable `Person` identities added so friends are never financially aggregated
-  by display name.
-- Direct friend expenses added through hidden two-person groups that reuse the
-  existing expense engine.
-- UPI QR/payment confirmation flow added for INR debts.
-- INR is now the default new-group currency.
-- PWA manifest/offline metadata updated.
-- Jest config stabilized with a direct Babel transform.
-- New tests cover personal dashboard aggregation and UPI URI generation.
+- Visible product identity is now LEDGER.
+- Central product configuration lives in `src/config/app.ts`.
+- Root page is a personal Overview, not a landing page.
+- Desktop sidebar and mobile bottom navigation were redesigned.
+- Friends, friend detail, direct friend expense, Activity, and Settings routes
+  were added.
+- Stable `Person` identities prevent display-name-based financial aggregation.
+- Hidden `DirectGroup` records support one-to-one friend expenses.
+- UPI QR/payment confirmation was added for INR settlements.
+- INR, `en-IN`, and `Asia/Kolkata` are the default assumptions.
+- PWA metadata and icons were rebuilt for LEDGER.
 
-The original license and attribution were not removed.
+The original license and required attribution remain.
 
-## New Architecture
+## Design System
 
-SplitMate does not add a duplicate accounting engine. It derives personal views
-from existing groups, participants, expenses, and activities.
+LEDGER uses warm light surfaces, graphite dark mode, a violet-blue product
+accent, restrained positive/negative balance colors, and tabular financial
+numbers. Shared primitives live in:
+
+- `src/components/ledger-logo.tsx`
+- `src/components/ledger-ui.tsx`
+- `src/app/globals.css`
+
+## Important Architecture
+
+LEDGER does not add a second accounting engine. It derives personal views from
+the existing groups, participants, expenses, reimbursements, categories,
+documents, and activity rows.
 
 Important files:
 
-- `src/lib/splitmate/personal-ledger.ts`: pure dashboard/friends aggregation.
-- `src/trpc/routers/personal/dashboard.procedure.ts`: server data fetch for the
-  personal ledger.
-- `src/trpc/routers/personal/identity.procedure.ts`: participant linking,
-  direct group creation, person details, and settlement mutations.
-- `src/app/personal-data-client.tsx`: recent-group and active-user local storage
-  bridge.
-- `src/lib/identity.ts`: browser-local profile storage.
-- `src/lib/upi.ts`: UPI URI helpers.
+- `src/lib/splitmate/personal-ledger.ts`: pure Overview/Friends aggregation.
+- `src/trpc/routers/personal/dashboard.procedure.ts`: personal data fetch.
+- `src/trpc/routers/personal/identity.procedure.ts`: identity linking, direct
+  group creation, person details, and settlements.
+- `src/lib/api.ts`: existing group/expense engine plus direct group helpers.
+- `src/lib/upi.ts`: UPI URI generation.
+- `src/lib/upi-validation.ts`: local VPA format validation.
 
-## Important Models
+## Identity
 
-Existing models retained:
+New/changed data model:
 
-- `Group`
-- `Participant`
-- `Expense`
-- `ExpensePaidFor`
-- `ExpenseDocument`
-- `Activity`
-- `Category`
-- `RecurringExpenseLink`
+- `Person`
+- `Participant.personId`
+- `DirectGroup`
 
-New models/fields:
+Legacy migration creates one `Person` per existing participant. It does not
+merge participants by name. Users explicitly link or unlink identities from
+friend detail pages.
 
-- `Person`: stable human identity with display name, avatar, optional UPI ID,
-  and timestamps.
-- `Participant.personId`: optional link from a group-scoped participant to a
-  stable person.
-- `DirectGroup`: hidden one-to-one mapping from an unordered pair of `Person`
-  IDs to a normal two-person group.
+Display names are used for display/search only. They are never authoritative
+financial identity keys.
 
-The migration creates one `Person` per legacy participant. It does not merge
-participants with the same display name.
+## Direct Expenses
 
-## Dashboard Aggregation Logic
+Friends -> Friend detail -> Add expense opens a focused two-person form. LEDGER
+creates or reuses a hidden direct group for the current user and friend, then
+saves a normal equal-split expense through the existing engine.
 
-The client sends known `{ groupId, participantId }` pairs from local storage.
-The server fetches those groups and calls `buildPersonalDashboard`.
+## UPI
 
-The aggregation:
+UPI payment links and QR codes are generated from explicit UPI IDs. Opening an
+app or scanning a QR does not imply success. The user must press
+`Mark as settled`, which creates a reimbursement expense.
 
-- computes group balances with `getBalances`;
-- uses `getExpenseShares` for exact personal shares;
-- buckets totals by `currencyCode` or custom currency symbol;
-- never sums different currencies together;
-- derives friend pair balances from payer/share relationships keyed by stable
-  identity;
-- uses existing activity rows only.
+## Currency
 
-Participant names are not used as financial identity keys. Names can change, and
-two unrelated people can share a name. The ledger uses `Person.id`; if a record
-does not have a person yet, the fallback key is scoped to that participant in
-that group only.
-
-## Identity Implementation
-
-Identity is stored in local storage under `splitmate.identity`. It contains:
-
-- display name;
-- initials;
-- preferred currency;
-- optional UPI ID;
-- theme;
-- locale.
-
-This complements, but does not replace, each group's existing active-user
-setting (`${groupId}-activeUser`).
-
-Friend detail pages provide explicit linking and unlinking:
-
-- link "Rahul" in one group to "Rahul Kumar" in another group when they are the
-  same human;
-- unlink a participant to create a separate `Person` without rewriting expenses.
-
-Linking changes aggregation only. It does not edit historical expense rows.
-
-## Direct Friend Expenses
-
-Friends -> Friend detail -> Add Expense opens a simplified two-person form.
-SplitMate creates or reuses a hidden direct group for the current user's
-`Person.id` and the friend's `Person.id`, then submits a normal expense with
-equal splits. The pair is order-independent, so A+B and B+A resolve to the same
-direct group.
-
-## UPI Implementation
-
-`src/lib/upi.ts` creates URL-encoded `upi://pay` links after local VPA format
-validation. The friend detail page displays a QR code and mobile-compatible UPI
-link for INR debts when the friend has a plausible UPI ID.
-
-The app does not listen for payment success and does not automatically create
-settlements after a UPI app opens or a QR code is scanned. The user must press
-`Mark as settled`.
-
-## Settlement Implementation
-
-Settlements continue to use Spliit's reimbursement expense model. Direct and UPI
-settlements are created as reimbursement expenses in the relevant direct group,
-preserving the existing balance engine and avoiding a second accounting
-mechanism.
-
-## AI Implementation
-
-AI receipt extraction and category suggestions reuse the existing server-side
-OpenAI flow. They are optional feature flags and must never directly save an
-expense without user confirmation.
-
-## Analytics Implementation
-
-Existing analytics providers remain opt-in. SplitMate does not add a new
-analytics service.
-
-## Design Decisions
-
-- Keep financial logic pure and tested.
-- Avoid destructive migrations.
-- Keep personal profile local because the app has no account system.
-- Add a small stable `Person` model because display-name aggregation is unsafe.
-- Keep optional features optional.
+Overview and Friends bucket totals by currency. INR and USD balances are shown
+separately unless a reliable persisted conversion mechanism exists.
 
 ## Known Tradeoffs
 
-- Identity linking is local to the capability groups the browser knows about;
-  this is appropriate for the current lightweight access model but not a full
-  account system.
-- Direct friend groups are hidden from the Groups screen, but they are still real
-  groups internally so existing exports/admin tools may see them.
-- Activity only shows records that the existing activity table captured.
+- The app intentionally keeps capability-link access rather than adding account
+  authentication.
+- Hidden direct groups are real groups internally, so low-level admin/export
+  tooling may still see them.
+- Activity shows only actions that were recorded in the existing activity table.
 
-## Rename SplitMate
+## Rename LEDGER
 
-Change `src/config/app.ts`, then search for static documentation references.
-Most runtime app metadata and UI labels consume `appConfig`.
+Change `src/config/app.ts`, update docs/static assets, and regenerate PWA icons
+if the visual identity changes.
 
 ## Change Theme
 
-Theme tokens live in `src/app/globals.css` and Tailwind token mapping lives in
-`tailwind.config.js`. Prefer updating CSS variables instead of hardcoding colors.
+Update CSS variables in `src/app/globals.css` and Tailwind token mapping in
+`tailwind.config.js`. Avoid hardcoding colors in individual screens.

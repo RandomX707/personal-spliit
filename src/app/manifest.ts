@@ -4,13 +4,13 @@ import { MetadataRoute } from 'next'
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: appConfig.name,
-    short_name: appConfig.name,
+    short_name: appConfig.shortName,
     description: appConfig.description,
     start_url: '/',
     id: '/',
     display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#0f172a',
+    background_color: '#f7f4ee',
+    theme_color: '#4f46e5',
     icons: [
       {
         src: '/logo/48x48.png',

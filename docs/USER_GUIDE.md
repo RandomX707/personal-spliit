@@ -1,100 +1,90 @@
-# SplitMate User Guide
+# LEDGER User Guide
+
+## Overview
+
+Open LEDGER to see your net position, money owed to you, money you owe, recent
+activity, friends, and groups. Multiple currencies are shown separately.
 
 ## Create A Group
 
-Open Groups, choose Create, enter a group name, currency, and participants, then
+Open Groups, choose Create group, enter a name, currency, and participants, then
 save. New groups default to INR.
+
+## Identify Yourself
+
+Open a group and choose who you are when prompted. LEDGER uses that choice to
+build your personal Overview for that browser.
 
 ## Add Friends
 
 Friends are people in your groups. Add them as participants when creating or
-editing a group. After you identify yourself in that group, they appear on the
-Friends screen.
-
-SplitMate keeps stable identities behind the scenes. Two people with the same
-name stay separate unless you explicitly link them.
-
-## Identify Yourself
-
-Open a group and use the active-user prompt to tell SplitMate who you are in
-that group. Open Settings to store your display name, initials, preferred
-currency, theme, locale, and optional UPI ID on this device.
+editing a group. Two people with the same name stay separate unless you
+explicitly link them.
 
 ## Link Identities
 
-Open a friend's detail page and use Identity linking when the same person appears
-with different participant names across groups, such as "Rahul" and "Rahul
-Kumar". Linking combines future dashboard/friend aggregation without changing
-historical expenses.
+Open a friend's detail page and use Identity management when the same person
+appears differently across groups, such as "Rahul" and "Rahul Kumar". Linking
+combines personal aggregation without changing historical expenses.
 
-Use Unlink when a participant was linked to the wrong person. Unlinking separates
-that participant into its own identity.
+Use Unlink if a participant was attached to the wrong person.
 
-## Add An Expense
+## Add A Group Expense
 
-Open a group, choose Add Expense, enter description, amount, date, category,
-payer, participants, and split method, then save.
+Open a group, choose Add expense, enter amount, description, payer,
+participants, split method, category, date, and save.
 
 ## Add A Direct Friend Expense
 
-Open Friends, choose a friend, then choose Add Expense. Enter a description,
-amount, payer, and save. SplitMate uses a hidden two-person group internally, so
-balances stay compatible with normal group expenses.
+Open Friends, choose a friend, then Add expense. Enter amount, description, and
+payer. LEDGER splits equally by default and hides the internal direct group.
 
 ## Change Split Method
 
-Use the split controls in the expense form:
+The group expense form supports:
 
-- Equal;
-- Exact amounts;
-- Percentage;
-- Shares.
+- Equal
+- Exact amounts
+- Percentage
+- Shares
 
-SplitMate validates that allocated shares match the total where required.
+LEDGER uses the existing financial engine to validate allocation and rounding.
 
-## Upload A Receipt
+## Upload Or Scan A Receipt
 
-If uploads are enabled, attach a receipt from the expense form. On mobile, your
-browser may offer camera/photo options.
-
-## Scan A Receipt
-
-If receipt scanning is enabled, upload a receipt and let AI create a draft. Check
-merchant, amount, date, category, and currency before saving.
+If uploads are configured, attach a receipt from the expense form. If AI receipt
+scanning is configured, LEDGER can create a draft. Review every value before
+saving.
 
 ## Check Balances
 
-Use Dashboard for personal totals, Friends for person-level balances, and each
-group's Balances tab for who owes whom.
+Use Overview for your overall position, Friends for person-level balances, and a
+group's Balances tab for who owes whom inside that group.
 
 ## Settle Expenses
 
-Open a group's Balances tab and use the suggested reimbursement flow. A
-settlement is saved only when you explicitly record it.
+Use group balance suggestions or a friend UPI flow. A settlement is recorded only
+when you explicitly confirm it.
 
 ## Use UPI
 
 Add a friend's UPI ID on their friend detail page. When you owe that friend in
-INR, SplitMate shows a UPI payment button and QR code.
+INR, LEDGER shows a UPI button and QR code. Opening the app or scanning the QR
+does not settle anything. Press Mark as settled only after payment completes.
 
-Opening the UPI app or scanning the QR does not confirm payment. After you
-complete the payment, return to SplitMate and press Mark as settled. Press Not
-yet if the payment was not completed.
+## Settings
 
-## Read The Dashboard
+Settings include:
 
-The dashboard shows:
-
-- how much you are owed;
-- how much you owe;
-- your net balance;
-- friend balances;
-- active groups;
-- recent expenses.
-
-If multiple currencies exist, totals are displayed separately.
+- Profile name and initials
+- Identity management entry point
+- UPI ID
+- Default currency
+- Theme
+- Feature availability
+- About and open-source attribution
 
 ## Install As A PWA
 
-Open the app in a mobile browser and use the browser's install/add-to-home-screen
-option. The installed app uses the mobile bottom navigation.
+Use your browser's install/add-to-home-screen action. LEDGER uses a compact
+mobile header and safe-area-aware bottom navigation in standalone mode.

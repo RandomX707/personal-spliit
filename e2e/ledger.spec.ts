@@ -16,7 +16,7 @@ async function expectNoHorizontalOverflow(page: {
     .toBe(true)
 }
 
-test('SplitMate dashboard and navigation render on desktop and mobile', async ({
+test('LEDGER overview and navigation render on desktop and mobile', async ({
   page,
 }) => {
   await page.goto('/')
@@ -24,17 +24,16 @@ test('SplitMate dashboard and navigation render on desktop and mobile', async ({
   await expect(
     page.getByRole('heading', { name: /Good (morning|afternoon|evening)/ }),
   ).toBeVisible()
-  await expect(
-    page.getByRole('heading', { name: 'You are owed' }),
-  ).toBeVisible()
-  await expect(page.getByRole('link', { name: /Dashboard/ })).toBeVisible()
+  await expect(page.getByText('LEDGER').first()).toBeVisible()
+  await expect(page.getByText('Your balance')).toBeVisible()
+  await expect(page.getByRole('link', { name: /Overview/ })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
   await page.setViewportSize({ width: 375, height: 812 })
   await page.goto('/')
-  await expect(page.getByRole('link', { name: 'Home' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Overview' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Friends' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Add expense' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'New expense' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
   await page.addInitScript(() => {
@@ -47,7 +46,7 @@ test('SplitMate dashboard and navigation render on desktop and mobile', async ({
 test('records a direct friend expense and only settles UPI after confirmation', async ({
   page,
 }) => {
-  const name = `SplitMate Friend ${uniqueSuffix()}`
+  const name = `LEDGER Friend ${uniqueSuffix()}`
   const groupId = await createGroup(page, {
     name,
     participants: ['Alice', 'Rahul'],
@@ -69,12 +68,12 @@ test('records a direct friend expense and only settles UPI after confirmation', 
   const paymentDetails = cardByTitle(page, 'Payment details')
   await fillStable(paymentDetails.getByLabel('UPI ID'), 'rahul@oksbi')
   await paymentDetails.getByRole('button', { name: 'Save' }).click()
-  await expect(page.getByText('Friend details saved')).toBeVisible()
+  await expect(page.getByText('UPI ID updated')).toBeVisible()
 
-  await page.getByRole('link', { name: /Add Expense/ }).click()
-  await expect(
-    page.getByRole('heading', { name: 'Add friend expense' }),
-  ).toBeVisible({ timeout: 30_000 })
+  await page.getByRole('link', { name: /Add expense/ }).click()
+  await expect(page.getByRole('heading', { name: /With Rahul/ })).toBeVisible({
+    timeout: 30_000,
+  })
   await fillStable(page.locator('#direct-title'), 'Direct coffee')
   await fillStable(page.locator('#direct-amount'), '1200')
   await selectRadixOption(
@@ -82,7 +81,7 @@ test('records a direct friend expense and only settles UPI after confirmation', 
     fieldByLabel(page, 'Paid by').getByRole('combobox'),
     'Rahul',
   )
-  await page.getByRole('button', { name: 'Save expense' }).click()
+  await page.getByRole('button', { name: 'Add expense' }).click()
   await page.waitForURL(/\/groups\/[^/]+\/expenses\/[^/]+\/edit/, {
     timeout: 30_000,
   })
@@ -90,9 +89,14 @@ test('records a direct friend expense and only settles UPI after confirmation', 
   await page.goto('/friends')
   await page.getByRole('link', { name: /Rahul/ }).first().click()
   await expect(page.getByText(/You owe Rahul/)).toBeVisible()
-  const upiSettlement = cardByTitle(page, 'UPI settlement')
-  await expect(upiSettlement).toBeVisible()
-  await expect(upiSettlement.locator('svg').first()).toBeVisible()
+  await expect(page.getByText('UPI settlement')).toBeVisible()
+  await expect(
+    page
+      .locator('section')
+      .filter({ hasText: 'UPI settlement' })
+      .locator('svg')
+      .first(),
+  ).toBeVisible()
 
   await page.getByRole('button', { name: 'I have paid with UPI' }).click()
   await expect(page.getByText('Did you complete the payment?')).toBeVisible()

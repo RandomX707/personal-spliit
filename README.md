@@ -1,60 +1,51 @@
-# SplitMate
+# LEDGER
 
-Expenses made simple.
+Shared money, made clear.
 
-SplitMate is a private, production-oriented personal fork of Spliit for sharing
-expenses with friends and groups. It keeps Spliit's lightweight group-link access
-model and proven expense engine, then adds a Splitwise-style dashboard, friends,
-activity, UPI helpers, INR defaults, improved PWA metadata, and a polished app
-shell.
+LEDGER is a private expense-sharing application for friends and groups, built on
+the open-source Spliit foundation. It keeps the proven group expense engine and
+lightweight link-based access model, then adds a polished personal finance
+experience: Overview, Friends, direct expenses, stable people identities, UPI
+settlement helpers, receipt uploads, optional AI extraction, dark mode, and PWA
+installation.
 
-## Core Features
+## Features
 
-- Personal dashboard with "you are owed", "you owe", and net balances.
-- Currency-safe aggregation: INR, USD, and other currencies are never blindly summed.
-- Friends derived from stable `Person` identities, with explicit participant
-  linking across groups and friend detail pages.
-- Direct friend expenses that reuse the existing group expense engine through
-  hidden two-person direct groups.
-- Existing group expense engine, split modes, reimbursements, recurring expenses,
-  stats, exports, receipt uploads, and AI extraction retained.
-- INR (`₹`) and `en-IN` are the default product assumptions for new groups.
-- Browser-local My Identity settings for display name, initials, preferred
-  currency, theme, locale, and optional UPI ID.
-- UPI URI generation for explicit settlement flows. Opening UPI never marks a
-  payment as settled.
-- PWA-ready mobile shell with desktop sidebar and mobile bottom navigation.
+- Overview with owed, owing, and net balances shown separately by currency.
+- Stable `Person` identity model; display names are never financial identity
+  keys.
+- Friends list and counterparty detail pages with explicit link/unlink controls.
+- Direct friend expenses through hidden two-person groups using the existing
+  expense engine.
+- Group expenses, split modes, reimbursements, recurring expenses, stats,
+  exports, receipts, and activity retained from the Spliit engine.
+- UPI payment URI and QR generation with explicit manual settlement
+  confirmation.
+- INR, `en-IN`, and `Asia/Kolkata` defaults.
+- Optional OpenAI receipt/category extraction that never saves without review.
+- Responsive LEDGER UI with dark mode and PWA metadata/icons.
 
-## Architecture Overview
+## Architecture
 
 - Next.js App Router under `src/app`.
-- Prisma 7 schema and migrations under `prisma/`.
+- Prisma schema and migrations under `prisma/`.
 - tRPC routers under `src/trpc/routers`.
 - Existing financial logic in `src/lib/shares.ts` and `src/lib/balances.ts`.
-- SplitMate personal aggregation in `src/lib/splitmate/personal-ledger.ts`.
-- Stable cross-group identity through `Person`, `Participant.personId`, and
-  `DirectGroup`.
-- Central product config in `src/config/app.ts`.
-- Client identity storage in `src/lib/identity.ts`.
+- Personal aggregation in `src/lib/splitmate/personal-ledger.ts`.
+- Product configuration in `src/config/app.ts`.
+- Browser-local profile storage in `src/lib/identity.ts`.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Local Development
-
-Use the package manager already committed in this repo:
 
 ```bash
 npm install
 cp .env.example .env
-npm run dev
-```
-
-The app requires PostgreSQL:
-
-```bash
 ./scripts/start-local-db.sh
 npx prisma migrate deploy
 npx prisma generate
+npm run dev
 ```
 
 Open `http://localhost:3000`.
@@ -78,7 +69,7 @@ Optional storage:
 - `S3_UPLOAD_SECRET`
 - `S3_UPLOAD_BUCKET`
 - `S3_UPLOAD_REGION`
-- `S3_UPLOAD_ENDPOINT` for non-AWS S3-compatible storage
+- `S3_UPLOAD_ENDPOINT`
 
 Optional AI:
 
@@ -97,94 +88,75 @@ Optional analytics:
 - `PLAUSIBLE_SCRIPT_URL`
 - `PLAUSIBLE_API_URL`
 
-AI and uploads are feature flagged. The expense splitter works without OpenAI or
-S3 credentials.
+The app remains a complete expense splitter without S3 or OpenAI credentials.
 
 ## Database Migrations
 
-Run migrations with Prisma:
+Deploy migrations safely:
 
 ```bash
 npx prisma migrate deploy
 npx prisma generate
 ```
 
-The SplitMate identity migration is non-destructive. It creates one `Person` per
-legacy participant by default and links participants to those identities without
-merging people that happen to share a display name. Later, you can explicitly
-link or unlink participants from the Friends detail screen.
-
-## Receipt Uploads
-
-Receipt attachments reuse the existing S3-compatible upload implementation. Enable
-`ENABLE_EXPENSE_DOCUMENTS` and provide the `S3_UPLOAD_*` variables. No second
-storage system was added.
-
-## AI Receipt Scanning And Categorization
-
-Receipt scanning and category suggestions reuse the existing OpenAI-backed
-server actions. They populate drafts/suggestions only; users still review and
-save expenses manually. Missing AI credentials disable the feature instead of
-breaking manual expense entry.
+The LEDGER identity migration is non-destructive. It creates one `Person` per
+legacy `Participant`, links participants conservatively, and does not merge
+people because their names match. Never run `prisma migrate reset` against
+production data.
 
 ## UPI
 
-Friends can store an optional UPI ID. SplitMate can generate links like:
+Friends can store optional UPI IDs. LEDGER generates encoded UPI payment links
+and QR codes, for example:
 
 ```text
-upi://pay?pa=name%40bank&pn=Name&am=850.00&cu=INR&tn=SplitMate+settlement
+upi://pay?pa=name%40bank&pn=Name&am=850.00&cu=INR&tn=LEDGER+settlement
 ```
 
-UPI app launch is not payment confirmation. Record settlement manually after the
-payment is actually complete.
+Opening a UPI app or scanning a QR code is not proof of payment. LEDGER records a
+settlement only when the user explicitly presses `Mark as settled`.
 
-## PWA
+## Receipts And AI
 
-The manifest starts at `/`, uses SplitMate naming, and keeps the existing icon
-sizes. Mobile navigation is bottom-aligned for standalone installs.
+Receipt attachments reuse the existing S3-compatible upload implementation.
+Receipt extraction and category suggestions reuse the server-side OpenAI flow.
+AI returns drafts/suggestions only; users must review and save expenses
+manually.
 
 ## Testing
 
 ```bash
-npx prisma validate
-npm run check-types
+npm run check-formatting
 npm run lint
+npm run check-types
 npm test -- --runInBand
+npx prisma validate
+npx prisma generate
 npm run build
 ```
 
-Playwright is available through:
+Playwright E2E:
 
 ```bash
 npm run e2e
 ```
 
-It requires the local E2E database/container setup from the existing Spliit
-scripts.
+The E2E script starts an isolated app and PostgreSQL stack through Docker
+Compose. It does not use a real developer or production database.
 
 ## Vercel Deployment
 
 1. Create a PostgreSQL database.
-2. Set required database variables in Vercel.
+2. Configure the required database environment variables in Vercel.
 3. Set `DEFAULT_CURRENCY_CODE=INR`.
-4. Optionally set storage, AI, and analytics variables.
+4. Optionally configure storage, AI, and analytics variables.
 5. Deploy from this repository.
-6. Run Prisma migrations as part of deployment (`postinstall` already runs
-   `prisma migrate deploy && prisma generate`).
+6. Ensure migrations run with `prisma migrate deploy`.
 
-Do not run `prisma migrate reset` against production data.
-
-## Privacy And Security Notes
-
-- Group URLs are capability links. Treat them as sensitive.
-- OpenAI keys remain server-side.
-- Analytics is disabled unless configured.
-- UPI links are generated locally from explicit profile data.
-- Existing groups, participants, expenses, receipts, reimbursements, and
-  migrations are preserved.
+Do not hardcode deployment URLs or point previews at destructive databases.
 
 ## Open-Source Attribution
 
-SplitMate is based on the open-source Spliit project. The upstream license is
-preserved in [LICENSE](LICENSE), and upstream attribution remains available in
-the application settings and footer.
+LEDGER is based on the open-source Spliit project. The original license remains
+in [LICENSE](LICENSE), and upstream attribution is preserved in the app and
+documentation.

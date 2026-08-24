@@ -92,7 +92,7 @@ export async function createDirectExpenseGroup({
       data: {
         id: randomId(),
         name: `${currentPerson.displayName} & ${friendPerson.displayName}`,
-        information: 'Direct SplitMate friend expenses',
+        information: 'Direct LEDGER friend expenses',
         currency: '₹',
         currencyCode: 'INR',
         participants: {

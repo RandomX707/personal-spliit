@@ -1,9 +1,10 @@
 import { appConfig } from '@/config/app'
 import { z } from 'zod'
 
-export const identityStorageKey = 'splitmate.identity'
+export const identityStorageKey = 'ledger.identity'
+export const legacyIdentityStorageKey = 'splitmate.identity'
 
-export const splitMateIdentitySchema = z.object({
+export const ledgerIdentitySchema = z.object({
   displayName: z.string().min(1).max(80).default(''),
   avatarInitials: z.string().max(4).default(''),
   preferredCurrency: z
@@ -15,9 +16,9 @@ export const splitMateIdentitySchema = z.object({
   locale: z.string().min(2).default(appConfig.defaultLocale),
 })
 
-export type SplitMateIdentity = z.infer<typeof splitMateIdentitySchema>
+export type LedgerIdentity = z.infer<typeof ledgerIdentitySchema>
 
-export function getFallbackIdentity(): SplitMateIdentity {
+export function getFallbackIdentity(): LedgerIdentity {
   return {
     displayName: '',
     avatarInitials: '',
@@ -28,10 +29,10 @@ export function getFallbackIdentity(): SplitMateIdentity {
   }
 }
 
-export function parseStoredIdentity(value: string | null): SplitMateIdentity {
+export function parseStoredIdentity(value: string | null): LedgerIdentity {
   if (!value) return getFallbackIdentity()
   try {
-    return splitMateIdentitySchema.parse(JSON.parse(value))
+    return ledgerIdentitySchema.parse(JSON.parse(value))
   } catch {
     return getFallbackIdentity()
   }

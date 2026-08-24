@@ -53,7 +53,7 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid group ID' }, { status: 404 })
 
   const date = new Date().toISOString().split('T')[0]
-  const filename = `SplitMate Export - ${date}`
+  const filename = `LEDGER Export - ${date}`
   return NextResponse.json(group, {
     headers: {
       'content-type': 'application/json',

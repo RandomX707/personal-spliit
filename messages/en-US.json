@@ -1,8 +1,8 @@
 {
   "Homepage": {
     "title": "Share <strong>Expenses</strong> with <strong>Friends & Family</strong>",
-    "metaTitle": "Spliit · Share Expenses with Friends & Family",
-    "description": "Welcome to your new <strong>Spliit</strong> instance !",
+    "metaTitle": "LEDGER · Share Expenses with Friends & Family",
+    "description": "Welcome to your new <strong>LEDGER</strong> instance !",
     "button": {
       "groups": "Go to groups",
       "github": "GitHub"
@@ -533,7 +533,7 @@
   },
   "Pwa": {
     "updateTitle": "Update available",
-    "updateDescription": "A new version of Spliit is available.",
+    "updateDescription": "A new version of LEDGER is available.",
     "reload": "Reload"
   }
 }

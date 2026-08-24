@@ -12,11 +12,11 @@ describe('UPI helpers', () => {
       payeeName: 'Rahul Sharma',
       amountMinor: 85000,
       currencyCode: 'INR',
-      note: 'SplitMate settlement',
+      note: 'LEDGER settlement',
     })
 
     expect(uri).toBe(
-      'upi://pay?pa=rahul%40oksbi&pn=Rahul+Sharma&am=850.00&cu=INR&tn=SplitMate+settlement',
+      'upi://pay?pa=rahul%40oksbi&pn=Rahul+Sharma&am=850.00&cu=INR&tn=LEDGER+settlement',
     )
   })
 
@@ -26,11 +26,11 @@ describe('UPI helpers', () => {
       payeeName: 'Rahul & Co',
       amountMinor: 120050,
       currencyCode: 'INR',
-      note: 'Dinner + cab / SplitMate',
+      note: 'Dinner + cab / LEDGER',
     })
 
     expect(uri).toBe(
-      'upi://pay?pa=custom.handle%40provider&pn=Rahul+%26+Co&am=1200.50&cu=INR&tn=Dinner+%2B+cab+%2F+SplitMate',
+      'upi://pay?pa=custom.handle%40provider&pn=Rahul+%26+Co&am=1200.50&cu=INR&tn=Dinner+%2B+cab+%2F+LEDGER',
     )
   })
 

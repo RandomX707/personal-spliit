@@ -1,20 +1,29 @@
-# SplitMate Architecture
+# LEDGER Architecture
 
 ## Frontend Structure
 
 ```mermaid
 flowchart TD
   Layout[src/app/layout.tsx] --> Shell[AppShell]
-  Shell --> Dashboard[src/app/page.tsx]
+  Shell --> Overview[src/app/page.tsx]
   Shell --> Friends[src/app/friends]
+  Shell --> FriendDetail[src/app/friends/[friendKey]]
   Shell --> Groups[src/app/groups]
+  Shell --> GroupDetail[src/app/groups/[groupId]]
   Shell --> Activity[src/app/activity]
   Shell --> Settings[src/app/settings]
 ```
 
-The app uses Next.js App Router. Server components are kept where possible, and
-client components are used for local storage, tRPC hooks, forms, and interactive
-navigation.
+The app uses Next.js App Router. Server components remain in place for routing
+and metadata; client components handle local storage, tRPC hooks, forms,
+navigation state, and interactive payment/identity flows.
+
+## Product Shell
+
+Desktop uses a fixed left rail with LEDGER branding, Overview, Friends, Groups,
+Activity, New expense, My identity, and Settings. Mobile uses a compact header
+and safe-area-aware bottom navigation with a prominent center New expense
+action.
 
 ## Server And API Structure
 
@@ -24,39 +33,48 @@ flowchart TD
   API --> GroupsRouter[groups router]
   API --> PersonalRouter[personal router]
   GroupsRouter --> ExistingAPI[src/lib/api.ts]
-  PersonalRouter --> Prisma[Prisma]
-  PersonalRouter --> Ledger[personal-ledger.ts]
+  PersonalRouter --> Ledger[src/lib/splitmate/personal-ledger.ts]
+  ExistingAPI --> Prisma[(Prisma)]
+  Ledger --> Balances[src/lib/balances.ts]
+  Ledger --> Shares[src/lib/shares.ts]
 ```
 
-The existing groups, expenses, balances, stats, categories, and activities
-routers remain in place. SplitMate adds personal routes for dashboard data,
-stable identity linking, direct friend groups, and explicit settlement creation.
+Existing group, expense, balance, stats, category, document, and activity routes
+remain in use. LEDGER adds personal routes for Overview aggregation, identity
+linking, direct group creation, person details, and explicit settlements.
 
 ## Database Models
 
-Prisma models are defined in `prisma/schema.prisma`.
-
-Core lifecycle models:
+Core models:
 
 - `Group`
 - `Person`
 - `Participant`
+- `DirectGroup`
 - `Expense`
 - `ExpensePaidFor`
 - `ExpenseDocument`
 - `Activity`
 - `Category`
 - `RecurringExpenseLink`
-- `DirectGroup`
 
-`Person` is the stable cross-group identity. `Participant` remains the
-group-scoped accounting actor, and each participant can point to one `Person`
-through nullable `personId`. Financial records still reference participants, so
-linking identities never rewrites historical expenses.
+```mermaid
+erDiagram
+  Person ||--o{ Participant : "identity"
+  Group ||--o{ Participant : "has"
+  Group ||--o{ Expense : "records"
+  Participant ||--o{ Expense : "paidBy"
+  Expense ||--o{ ExpensePaidFor : "allocates"
+  Participant ||--o{ ExpensePaidFor : "paidFor"
+  Person ||--o{ DirectGroup : "personA"
+  Person ||--o{ DirectGroup : "personB"
+  Group ||--o| DirectGroup : "hidden direct group"
+```
 
-`DirectGroup` maps one unordered pair of `Person` IDs to one hidden two-person
-group. Direct friend expenses and UPI settlements use that group while keeping
-the normal expense and reimbursement engine.
+`Person` is the stable cross-group human identity. `Participant` remains the
+group-scoped accounting actor. Expenses still reference participants, so linking
+or unlinking a person changes personal aggregation without rewriting financial
+records.
 
 ## Expense Lifecycle
 
@@ -75,8 +93,8 @@ sequenceDiagram
   API->>DB: Activity CREATE_EXPENSE
 ```
 
-Amounts are stored as integer minor units. Split modes are validated by
-`expenseFormSchema`.
+Amounts are stored as integer minor units. Split validation and rounding remain
+in the existing engine.
 
 ## Balance Calculation
 
@@ -84,75 +102,56 @@ Amounts are stored as integer minor units. Split modes are validated by
 expense amount. `getBalances` computes paid, paid-for, and net totals. Suggested
 reimbursements are produced by `getSuggestedReimbursements`.
 
-SplitMate personal aggregation calls those existing helpers. Friend aggregation
-uses `Person.id` as the only cross-group identity key. Display names are used
-only for display/search; they are never authoritative financial keys. If a
-legacy participant has no `personId`, the ledger falls back to a key scoped to
-that one participant in that one group.
+LEDGER Overview and Friends call those helpers through
+`buildPersonalDashboard`. Cross-group friend aggregation uses `Person.id` only.
+Display names are never financial identity keys.
+
+## Direct Friend Expenses
+
+Friends -> Friend detail -> Add expense creates or reuses one hidden
+`DirectGroup` for the unordered pair of `Person` IDs. The visible form stays
+friend-focused, but the saved expense is a normal group expense with normal split
+rows.
 
 ## Settlement Lifecycle
 
-A settlement is represented as an expense with `isReimbursement=true`:
+Settlements are reimbursement expenses:
 
 - `paidBy` is the person paying back;
 - `paidFor` contains the recipient;
-- amount is the settlement amount.
+- amount is the settlement amount;
+- UPI settlements include method/note context.
 
-This reduces balances through the same engine as normal expenses.
+UPI launch and QR display never create a reimbursement. Only explicit
+`Mark as settled` confirmation records settlement.
 
-UPI settlements are created only after explicit user confirmation. Opening a UPI
-URI or displaying/scanning a QR code does not create a reimbursement.
+## Receipt And AI Flow
 
-## Receipt Flow
-
-Receipt attachments use the existing document upload UI and S3-compatible API.
-When receipt extraction is enabled, the server calls OpenAI and returns a draft
-for the user to review before saving.
-
-## AI Flow
-
-AI features are server-side only:
-
-- receipt extraction;
-- category suggestion.
-
-They require `OPENAI_API_KEY` and relevant feature flags. Missing AI
-configuration disables enhancement, not manual entry.
+Receipt uploads reuse the existing S3-compatible document flow. AI receipt and
+category extraction stay server-side, require optional environment variables,
+and populate drafts/suggestions only.
 
 ## Group Access Model
 
-Groups are accessed by URL capability. Recent groups and active users are stored
-in browser local storage. Group IDs should be treated as sensitive links.
-Identity-link mutations require the caller to provide accessible group IDs from
-local storage, and the server verifies that edited participants/people are linked
-to those groups.
+Groups are capability links. Recent group IDs and active-user choices live in
+browser local storage. Server mutations that link identities or create direct
+groups verify that the referenced people/participants are connected to groups
+the browser can access.
 
 ## Identity Model
 
-SplitMate profile settings are stored locally under `splitmate.identity`.
-Database identity is handled separately with `Person` and `Participant.personId`.
-The local profile does not create authentication; it helps personalize this
-browser and identify the current user in known groups.
-
-```mermaid
-erDiagram
-  Person ||--o{ Participant : "identity"
-  Group ||--o{ Participant : "has"
-  Group ||--o{ Expense : "records"
-  Participant ||--o{ Expense : "paidBy"
-  Expense ||--o{ ExpensePaidFor : "allocates"
-  Participant ||--o{ ExpensePaidFor : "paidFor"
-  Person ||--o{ DirectGroup : "personA"
-  Person ||--o{ DirectGroup : "personB"
-  Group ||--o| DirectGroup : "hidden direct group"
-```
+Browser profile settings live under `ledger.identity`. Older
+`splitmate.identity` values are read for migration. Database identity lives in
+`Person` and `Participant.personId`; it is intentionally separate from
+authentication.
 
 ## Currency Handling
 
-Group expenses use the group's currency. Dashboard totals are bucketed by
-currency code or custom symbol. Different currencies are displayed separately.
+Group expenses use the group's currency. Overview/Friend totals are bucketed by
+currency code or custom symbol. LEDGER never sums different currencies without a
+persisted conversion rate.
 
-## Deployment Architecture
+## Deployment
 
 ```mermaid
 flowchart LR
@@ -162,5 +161,5 @@ flowchart LR
   Vercel --> OpenAI[(Optional OpenAI API)]
 ```
 
-Prisma migrations are deployed with `prisma migrate deploy`. Never reset a real
+Deploy schema changes with `prisma migrate deploy`. Never reset a production
 database.
