@@ -1,3 +1,5 @@
+import { isPlausibleUpiId } from './upi-validation'
+
 export type UpiPaymentInput = {
   upiId: string
   payeeName: string
@@ -18,8 +20,11 @@ export function createUpiPaymentUri({
   currencyCode = 'INR',
   note = 'SplitMate settlement',
 }: UpiPaymentInput) {
+  if (!isPlausibleUpiId(upiId)) {
+    throw new Error('Invalid UPI ID')
+  }
   const params = new URLSearchParams({
-    pa: upiId,
+    pa: upiId.trim(),
     pn: payeeName,
     am: amountMinorToMajor(amountMinor, currencyCode ?? 'INR'),
     cu: currencyCode ?? 'INR',

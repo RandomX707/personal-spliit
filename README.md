@@ -12,7 +12,10 @@ shell.
 
 - Personal dashboard with "you are owed", "you owe", and net balances.
 - Currency-safe aggregation: INR, USD, and other currencies are never blindly summed.
-- Friends derived from existing group participants, with friend detail pages.
+- Friends derived from stable `Person` identities, with explicit participant
+  linking across groups and friend detail pages.
+- Direct friend expenses that reuse the existing group expense engine through
+  hidden two-person direct groups.
 - Existing group expense engine, split modes, reimbursements, recurring expenses,
   stats, exports, receipt uploads, and AI extraction retained.
 - INR (`₹`) and `en-IN` are the default product assumptions for new groups.
@@ -29,6 +32,8 @@ shell.
 - tRPC routers under `src/trpc/routers`.
 - Existing financial logic in `src/lib/shares.ts` and `src/lib/balances.ts`.
 - SplitMate personal aggregation in `src/lib/splitmate/personal-ledger.ts`.
+- Stable cross-group identity through `Person`, `Participant.personId`, and
+  `DirectGroup`.
 - Central product config in `src/config/app.ts`.
 - Client identity storage in `src/lib/identity.ts`.
 
@@ -95,6 +100,20 @@ Optional analytics:
 AI and uploads are feature flagged. The expense splitter works without OpenAI or
 S3 credentials.
 
+## Database Migrations
+
+Run migrations with Prisma:
+
+```bash
+npx prisma migrate deploy
+npx prisma generate
+```
+
+The SplitMate identity migration is non-destructive. It creates one `Person` per
+legacy participant by default and links participants to those identities without
+merging people that happen to share a display name. Later, you can explicitly
+link or unlink participants from the Friends detail screen.
+
 ## Receipt Uploads
 
 Receipt attachments reuse the existing S3-compatible upload implementation. Enable
@@ -110,7 +129,7 @@ breaking manual expense entry.
 
 ## UPI
 
-Profiles can store an optional UPI ID. SplitMate can generate links like:
+Friends can store an optional UPI ID. SplitMate can generate links like:
 
 ```text
 upi://pay?pa=name%40bank&pn=Name&am=850.00&cu=INR&tn=SplitMate+settlement

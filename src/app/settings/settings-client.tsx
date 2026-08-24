@@ -28,6 +28,7 @@ import {
   parseStoredIdentity,
 } from '@/lib/identity'
 import { createUpiPaymentUri } from '@/lib/upi'
+import { isPlausibleUpiId } from '@/lib/upi-validation'
 import { ExternalLink, Save } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
@@ -56,6 +57,14 @@ export function SettingsClient() {
 
   function submit(event: FormEvent) {
     event.preventDefault()
+    if (identity.upiId && !isPlausibleUpiId(identity.upiId)) {
+      toast({
+        title: 'Check the UPI ID',
+        description: 'Use a plausible VPA format such as name@bank.',
+        variant: 'destructive',
+      })
+      return
+    }
     const nextIdentity = {
       ...identity,
       avatarInitials:

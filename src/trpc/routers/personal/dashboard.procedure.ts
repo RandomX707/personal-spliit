@@ -29,11 +29,14 @@ export const dashboardProcedure = baseProcedure
     const groups = await prisma.group.findMany({
       where: { id: { in: groupIds } },
       include: {
-        participants: true,
+        participants: { include: { person: true } },
+        directGroup: true,
         expenses: {
           include: {
-            paidBy: true,
-            paidFor: { include: { participant: true } },
+            paidBy: { include: { person: true } },
+            paidFor: {
+              include: { participant: { include: { person: true } } },
+            },
             category: true,
             _count: { select: { documents: true } },
           },

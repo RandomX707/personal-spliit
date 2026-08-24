@@ -2,6 +2,12 @@
 
 import { SplitMateLogo } from '@/components/splitmate-logo'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { appConfig } from '@/config/app'
 import { cn } from '@/lib/utils'
 import {
@@ -91,6 +97,34 @@ function MobileNavLink({
   )
 }
 
+function AddExpenseMenu({ mobile = false }: { mobile?: boolean }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          className={cn(
+            mobile
+              ? '-mt-7 h-14 w-14 shrink-0 rounded-full p-0 shadow-lg shadow-primary/25 ring-4 ring-background'
+              : 'h-12 justify-start gap-3 rounded-xl shadow-sm',
+          )}
+          aria-label="Add expense"
+        >
+          <Plus className={cn('h-4 w-4', mobile && 'h-6 w-6')} />
+          {!mobile && <span>Add Expense</span>}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={mobile ? 'center' : 'start'}>
+        <DropdownMenuItem asChild>
+          <Link href="/friends">Add expense with friend</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/groups/create">Add expense to group</Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] bg-background">
@@ -106,15 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <NavLink key={item.href} {...item} />
             ))}
           </div>
-          <Button
-            asChild
-            className="h-12 justify-start gap-3 rounded-xl shadow-sm"
-          >
-            <Link href="/groups/create">
-              <Plus className="h-4 w-4" />
-              Add Expense
-            </Link>
-          </Button>
+          <AddExpenseMenu />
           <div className="mt-auto grid gap-1 border-t pt-4">
             {secondaryNav.map((item) => (
               <NavLink key={item.href} {...item} />
@@ -145,13 +171,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-md items-center gap-1">
           <MobileNavLink href="/" label="Home" icon={Home} />
           <MobileNavLink href="/friends" label="Friends" icon={Users} />
-          <Link
-            href="/groups/create"
-            aria-label="Add expense"
-            className="-mt-7 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 ring-4 ring-background transition-transform active:scale-95"
-          >
-            <Plus className="h-6 w-6" />
-          </Link>
+          <AddExpenseMenu mobile />
           <MobileNavLink href="/groups" label="Groups" icon={WalletCards} />
           <MobileNavLink href="/activity" label="Activity" icon={Activity} />
         </div>

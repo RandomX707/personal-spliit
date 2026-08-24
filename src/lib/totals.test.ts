@@ -323,10 +323,16 @@ describe('getSpendingByParticipant', () => {
     const expenses = [
       makeExpense({
         amount: 1000,
-        paidBy: { id: 'alice', name: 'Alice' },
+        paidBy: { id: 'alice', name: 'Alice', personId: null },
         paidFor: [
-          { participant: { id: 'alice', name: 'Alice' }, shares: 1 },
-          { participant: { id: 'bob', name: 'Bob' }, shares: 1 },
+          {
+            participant: { id: 'alice', name: 'Alice', personId: null },
+            shares: 1,
+          },
+          {
+            participant: { id: 'bob', name: 'Bob', personId: null },
+            shares: 1,
+          },
         ],
       }),
     ]

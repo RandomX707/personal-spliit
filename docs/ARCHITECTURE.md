@@ -29,17 +29,17 @@ flowchart TD
 ```
 
 The existing groups, expenses, balances, stats, categories, and activities
-routers remain in place. SplitMate adds `personal.dashboard` for personal
-dashboard/friends/activity data.
+routers remain in place. SplitMate adds personal routes for dashboard data,
+stable identity linking, direct friend groups, and explicit settlement creation.
 
 ## Database Models
 
-Prisma models are defined in `prisma/schema.prisma`. SplitMate did not require a
-schema change.
+Prisma models are defined in `prisma/schema.prisma`.
 
 Core lifecycle models:
 
 - `Group`
+- `Person`
 - `Participant`
 - `Expense`
 - `ExpensePaidFor`
@@ -47,6 +47,16 @@ Core lifecycle models:
 - `Activity`
 - `Category`
 - `RecurringExpenseLink`
+- `DirectGroup`
+
+`Person` is the stable cross-group identity. `Participant` remains the
+group-scoped accounting actor, and each participant can point to one `Person`
+through nullable `personId`. Financial records still reference participants, so
+linking identities never rewrites historical expenses.
+
+`DirectGroup` maps one unordered pair of `Person` IDs to one hidden two-person
+group. Direct friend expenses and UPI settlements use that group while keeping
+the normal expense and reimbursement engine.
 
 ## Expense Lifecycle
 
@@ -74,7 +84,11 @@ Amounts are stored as integer minor units. Split modes are validated by
 expense amount. `getBalances` computes paid, paid-for, and net totals. Suggested
 reimbursements are produced by `getSuggestedReimbursements`.
 
-SplitMate personal aggregation calls those existing helpers.
+SplitMate personal aggregation calls those existing helpers. Friend aggregation
+uses `Person.id` as the only cross-group identity key. Display names are used
+only for display/search; they are never authoritative financial keys. If a
+legacy participant has no `personId`, the ledger falls back to a key scoped to
+that one participant in that one group.
 
 ## Settlement Lifecycle
 
@@ -85,6 +99,9 @@ A settlement is represented as an expense with `isReimbursement=true`:
 - amount is the settlement amount.
 
 This reduces balances through the same engine as normal expenses.
+
+UPI settlements are created only after explicit user confirmation. Opening a UPI
+URI or displaying/scanning a QR code does not create a reimbursement.
 
 ## Receipt Flow
 
@@ -106,11 +123,29 @@ configuration disables enhancement, not manual entry.
 
 Groups are accessed by URL capability. Recent groups and active users are stored
 in browser local storage. Group IDs should be treated as sensitive links.
+Identity-link mutations require the caller to provide accessible group IDs from
+local storage, and the server verifies that edited participants/people are linked
+to those groups.
 
 ## Identity Model
 
 SplitMate profile settings are stored locally under `splitmate.identity`.
-They do not alter database participants and do not create authentication.
+Database identity is handled separately with `Person` and `Participant.personId`.
+The local profile does not create authentication; it helps personalize this
+browser and identify the current user in known groups.
+
+```mermaid
+erDiagram
+  Person ||--o{ Participant : "identity"
+  Group ||--o{ Participant : "has"
+  Group ||--o{ Expense : "records"
+  Participant ||--o{ Expense : "paidBy"
+  Expense ||--o{ ExpensePaidFor : "allocates"
+  Participant ||--o{ ExpensePaidFor : "paidFor"
+  Person ||--o{ DirectGroup : "personA"
+  Person ||--o{ DirectGroup : "personB"
+  Group ||--o| DirectGroup : "hidden direct group"
+```
 
 ## Currency Handling
 

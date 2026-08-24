@@ -22,6 +22,7 @@ services:
     environment:
       POSTGRES_PRISMA_URL: postgresql://postgres:e2e@db:5432/spliit_e2e
       POSTGRES_URL_NON_POOLING: postgresql://postgres:e2e@db:5432/spliit_e2e
+      DEFAULT_CURRENCY_CODE: USD
       NEXT_TELEMETRY_DISABLED: '1'
     restart: 'no'
     depends_on:

@@ -1,5 +1,9 @@
 import { getGroupExpenses } from '@/lib/api'
-import { getBalances, getSuggestedReimbursements } from './balances'
+import {
+  getBalances,
+  getPublicBalances,
+  getSuggestedReimbursements,
+} from './balances'
 
 type Expenses = NonNullable<Awaited<ReturnType<typeof getGroupExpenses>>>
 type Expense = Expenses[number]
@@ -81,6 +85,23 @@ describe('settling up', () => {
     ]
 
     expect(getSuggestedReimbursements(getBalances(settled))).toEqual([])
+  })
+
+  it('preserves every participant net position when debts are simplified', () => {
+    const originalBalances = getBalances([
+      expense('alice', 9000, ['alice', 'bob', 'carol']),
+      expense('bob', 3000, ['bob', 'dina']),
+      expense('carol', 1200, ['alice', 'carol', 'dina']),
+    ])
+    const simplifiedBalances = getPublicBalances(
+      getSuggestedReimbursements(originalBalances),
+    )
+
+    for (const participantId of Object.keys(originalBalances)) {
+      expect(simplifiedBalances[participantId]?.total ?? 0).toBe(
+        originalBalances[participantId].total,
+      )
+    }
   })
 })
 

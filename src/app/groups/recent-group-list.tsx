@@ -140,17 +140,28 @@ function RecentGroupList_({
     starredGroups,
     archivedGroups,
   })
+  const visibleGroupDetails = data.groups.filter((group) => !group.directGroup)
+  const visibleGroupIds = new Set(visibleGroupDetails.map((group) => group.id))
+  const visibleStarredGroupInfo = starredGroupInfo.filter((group) =>
+    visibleGroupIds.has(group.id),
+  )
+  const visibleGroupInfo = groupInfo.filter((group) =>
+    visibleGroupIds.has(group.id),
+  )
+  const visibleArchivedGroupInfo = archivedGroupInfo.filter((group) =>
+    visibleGroupIds.has(group.id),
+  )
 
   return (
     <GroupsPage reload={refreshGroupsFromStorage}>
       <GlobalBalanceCard groups={groups} />
 
-      {starredGroupInfo.length > 0 && (
+      {visibleStarredGroupInfo.length > 0 && (
         <>
           <h2 className="mb-2">{t('starred')}</h2>
           <GroupList
-            groups={starredGroupInfo}
-            groupDetails={data.groups}
+            groups={visibleStarredGroupInfo}
+            groupDetails={visibleGroupDetails}
             archivedGroups={archivedGroups}
             starredGroups={starredGroups}
             refreshGroupsFromStorage={refreshGroupsFromStorage}
@@ -158,12 +169,12 @@ function RecentGroupList_({
         </>
       )}
 
-      {groupInfo.length > 0 && (
+      {visibleGroupInfo.length > 0 && (
         <>
           <h2 className="mt-6 mb-2">{t('recent')}</h2>
           <GroupList
-            groups={groupInfo}
-            groupDetails={data.groups}
+            groups={visibleGroupInfo}
+            groupDetails={visibleGroupDetails}
             archivedGroups={archivedGroups}
             starredGroups={starredGroups}
             refreshGroupsFromStorage={refreshGroupsFromStorage}
@@ -171,13 +182,13 @@ function RecentGroupList_({
         </>
       )}
 
-      {archivedGroupInfo.length > 0 && (
+      {visibleArchivedGroupInfo.length > 0 && (
         <>
           <h2 className="mt-6 mb-2 opacity-50">{t('archived')}</h2>
           <div className="opacity-50">
             <GroupList
-              groups={archivedGroupInfo}
-              groupDetails={data.groups}
+              groups={visibleArchivedGroupInfo}
+              groupDetails={visibleGroupDetails}
               archivedGroups={archivedGroups}
               starredGroups={starredGroups}
               refreshGroupsFromStorage={refreshGroupsFromStorage}

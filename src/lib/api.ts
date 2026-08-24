@@ -20,15 +20,106 @@ export async function createGroup(groupFormValues: GroupFormValues) {
       currency: groupFormValues.currency,
       currencyCode: groupFormValues.currencyCode,
       participants: {
-        createMany: {
-          data: groupFormValues.participants.map(({ name }) => ({
-            id: randomId(),
-            name,
-          })),
+        create: groupFormValues.participants.map(({ name }) => ({
+          id: randomId(),
+          name,
+          person: {
+            create: {
+              id: randomId(),
+              displayName: name,
+            },
+          },
+        })),
+      },
+    },
+    include: { participants: { include: { person: true } } },
+  })
+}
+
+export async function ensureParticipantPerson(participantId: string) {
+  const participant = await prisma.participant.findUnique({
+    where: { id: participantId },
+    include: { person: true },
+  })
+  if (!participant) throw new Error(`Invalid participant ID: ${participantId}`)
+  if (participant.personId) return participant.personId
+
+  const person = await prisma.person.create({
+    data: {
+      id: randomId(),
+      displayName: participant.name,
+      participants: { connect: { id: participant.id } },
+    },
+  })
+  return person.id
+}
+
+export async function createDirectExpenseGroup({
+  currentParticipantId,
+  friendPersonId,
+}: {
+  currentParticipantId: string
+  friendPersonId: string
+}) {
+  const currentPersonId = await ensureParticipantPerson(currentParticipantId)
+  if (currentPersonId === friendPersonId) {
+    throw new Error('Cannot create a direct group with the same person')
+  }
+
+  const [personAId, personBId] = [currentPersonId, friendPersonId].sort()
+  const existing = await prisma.directGroup.findUnique({
+    where: { personAId_personBId: { personAId, personBId } },
+    include: {
+      group: {
+        include: {
+          participants: { include: { person: true } },
         },
       },
     },
-    include: { participants: true },
+  })
+  if (existing) return existing.group
+
+  const [currentPerson, friendPerson] = await Promise.all([
+    prisma.person.findUnique({ where: { id: currentPersonId } }),
+    prisma.person.findUnique({ where: { id: friendPersonId } }),
+  ])
+  if (!currentPerson || !friendPerson) {
+    throw new Error('Invalid person identity')
+  }
+
+  return prisma.$transaction(async (transaction) => {
+    const group = await transaction.group.create({
+      data: {
+        id: randomId(),
+        name: `${currentPerson.displayName} & ${friendPerson.displayName}`,
+        information: 'Direct SplitMate friend expenses',
+        currency: '₹',
+        currencyCode: 'INR',
+        participants: {
+          create: [
+            {
+              id: randomId(),
+              name: currentPerson.displayName,
+              personId: currentPerson.id,
+            },
+            {
+              id: randomId(),
+              name: friendPerson.displayName,
+              personId: friendPerson.id,
+            },
+          ],
+        },
+        directGroup: {
+          create: {
+            id: randomId(),
+            personAId,
+            personBId,
+          },
+        },
+      },
+      include: { participants: { include: { person: true } } },
+    })
+    return group
   })
 }
 
@@ -142,7 +233,10 @@ export async function getGroups(groupIds: string[]) {
   return (
     await prisma.group.findMany({
       where: { id: { in: groupIds } },
-      include: { _count: { select: { participants: true } } },
+      include: {
+        _count: { select: { participants: true } },
+        directGroup: true,
+      },
     })
   ).map((group) => ({
     ...group,
@@ -312,14 +406,18 @@ export async function updateGroup(
               name: participant.name,
             },
           })),
-        createMany: {
-          data: groupFormValues.participants
-            .filter((participant) => participant.id === undefined)
-            .map((participant) => ({
-              id: randomId(),
-              name: participant.name,
-            })),
-        },
+        create: groupFormValues.participants
+          .filter((participant) => participant.id === undefined)
+          .map((participant) => ({
+            id: randomId(),
+            name: participant.name,
+            person: {
+              create: {
+                id: randomId(),
+                displayName: participant.name,
+              },
+            },
+          })),
       },
     },
   })
@@ -328,7 +426,10 @@ export async function updateGroup(
 export async function getGroup(groupId: string) {
   return prisma.group.findUnique({
     where: { id: groupId },
-    include: { participants: true },
+    include: {
+      participants: { include: { person: true } },
+      directGroup: true,
+    },
   })
 }
 
@@ -352,10 +453,10 @@ export async function getGroupExpenses(
       isReimbursement: true,
       originalAmount: true,
       originalCurrency: true,
-      paidBy: { select: { id: true, name: true } },
+      paidBy: { select: { id: true, name: true, personId: true } },
       paidFor: {
         select: {
-          participant: { select: { id: true, name: true } },
+          participant: { select: { id: true, name: true, personId: true } },
           shares: true,
         },
       },

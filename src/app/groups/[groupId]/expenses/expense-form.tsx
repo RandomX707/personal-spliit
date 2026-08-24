@@ -1060,6 +1060,7 @@ export function ExpenseForm({
                                                 id: participant,
                                                 name: '',
                                                 groupId: '',
+                                                personId: null,
                                               },
                                               shares:
                                                 form.watch('splitMode') ===
