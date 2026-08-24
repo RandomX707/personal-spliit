@@ -1,8 +1,9 @@
-# Spliit Personal Deployment
+# SplitMate Personal Deployment
 
-This repository is prepared for a personal Spliit deployment on Vercel with
-PostgreSQL. It keeps the upstream Spliit application intact and sets INR as the
-default currency for new groups.
+This repository is prepared for a personal SplitMate deployment on Vercel with
+PostgreSQL. It keeps the upstream Spliit financial engine and link-based group
+access model intact, while branding and personal dashboard screens are customized
+for SplitMate. INR is the default currency for new groups.
 
 Do not enable OpenAI, receipt extraction, S3, or custom authentication yet. Those
 features are optional and stay disabled while their environment flags are unset.
@@ -16,7 +17,7 @@ Browser
 Vercel
   |
   v
-Next.js / Spliit
+Next.js / SplitMate
   |
   v
 Prisma
@@ -41,7 +42,7 @@ POSTGRES_URL_NON_POOLING=<direct/non-pooled PostgreSQL connection string>
 DEFAULT_CURRENCY_CODE=INR
 ```
 
-`BASE_URL` is optional on Vercel because Spliit falls back to
+`BASE_URL` is optional on Vercel because SplitMate falls back to
 `https://$VERCEL_URL`. After you have a stable production URL, you can set:
 
 ```env
@@ -74,7 +75,7 @@ S3_UPLOAD_REGION=
 
 ## Database Migrations
 
-Spliit uses Prisma migrations in `prisma/migrations`.
+SplitMate uses Prisma migrations in `prisma/migrations`.
 
 The current package scripts run this during dependency installation:
 
@@ -90,7 +91,7 @@ Use a direct/non-pooled database URL for `POSTGRES_URL_NON_POOLING` because
 Prisma Migrate should not run through a transaction pooler. Use the pooled URL
 for `POSTGRES_PRISMA_URL` when your provider offers one.
 
-## Updating Spliit Later
+## Updating Upstream Later
 
 Keep the official Spliit repository as `upstream` and your GitHub repository as
 `origin`.

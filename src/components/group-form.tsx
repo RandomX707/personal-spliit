@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { appConfig } from '@/config/app'
 import { Locale } from '@/i18n/request'
 import { useAnalytics } from '@/lib/analytics/context'
 import { getGroup } from '@/lib/api'
@@ -59,7 +60,7 @@ export function GroupForm({
   group,
   onSubmit,
   protectedParticipantIds = [],
-  defaultCurrencyCode = 'USD',
+  defaultCurrencyCode = appConfig.defaultCurrency.code,
 }: Props) {
   const locale = useLocale()
   const t = useTranslations('GroupForm')
@@ -76,8 +77,8 @@ export function GroupForm({
       : {
           name: '',
           information: '',
-          currency: '',
-          currencyCode: defaultCurrencyCode, // TODO: derive from the locale when not configured
+          currency: appConfig.defaultCurrency.symbol,
+          currencyCode: defaultCurrencyCode,
           participants: [
             { name: t('Participants.John') },
             { name: t('Participants.Jane') },

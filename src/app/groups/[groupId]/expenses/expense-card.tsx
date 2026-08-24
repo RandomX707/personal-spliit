@@ -10,7 +10,6 @@ import { cn, formatCurrency, formatDateOnly } from '@/lib/utils'
 import { ChevronRight } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Fragment } from 'react'
 
 type Expense = Awaited<ReturnType<typeof getGroupExpenses>>[number]
@@ -58,7 +57,6 @@ export function ExpenseCard({
   groupId,
   participantCount,
 }: Props) {
-  const router = useRouter()
   const locale = useLocale() as Locale
 
   const originalAmount =
@@ -73,7 +71,8 @@ export function ExpenseCard({
       : null
 
   return (
-    <div
+    <Link
+      href={`/groups/${groupId}/expenses/${expense.id}/edit`}
       key={expense.id}
       data-testid="expense-card"
       data-expense-id={expense.id}
@@ -81,9 +80,6 @@ export function ExpenseCard({
         'flex justify-between sm:mx-6 px-4 sm:rounded-lg sm:pr-2 sm:pl-4 py-4 text-sm cursor-pointer hover:bg-accent gap-1 items-stretch',
         expense.isReimbursement && 'italic',
       )}
-      onClick={() => {
-        router.push(`/groups/${groupId}/expenses/${expense.id}/edit`)
-      }}
     >
       <CategoryIcon
         category={expense.category}
@@ -126,11 +122,12 @@ export function ExpenseCard({
         variant="link"
         className="self-center hidden sm:flex"
         asChild
+        tabIndex={-1}
       >
-        <Link href={`/groups/${groupId}/expenses/${expense.id}/edit`}>
+        <span>
           <ChevronRight className="w-4 h-4" />
-        </Link>
+        </span>
       </Button>
-    </div>
+    </Link>
   )
 }
