@@ -95,13 +95,15 @@ export function ExpenseList() {
   }, [groupId, participants])
 
   return (
-    <>
-      <SearchBar onValueChange={(value) => setSearchText(value)} />
+    <section className="ledger-surface rounded-[1.5rem] p-3">
+      <div className="mb-3">
+        <SearchBar onValueChange={(value) => setSearchText(value)} />
+      </div>
       <ExpenseListForSearch
         groupId={groupId}
         searchText={debouncedSearchText}
       />
-    </>
+    </section>
   )
 }
 

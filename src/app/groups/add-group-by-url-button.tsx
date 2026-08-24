@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { appConfig } from '@/config/app'
 import { useMediaQuery } from '@/lib/hooks'
 import { trpc } from '@/trpc/client'
 import { Link as LinkIcon, Loader2, Plus, QrCode } from 'lucide-react'
@@ -132,7 +133,7 @@ export function AddGroupByUrlButton({ reload }: Props) {
             <Input
               type="url"
               required
-              placeholder="https://spliit.app/..."
+              placeholder={`https://${appConfig.name.toLowerCase()}.example/groups/...`}
               className="flex-1 min-w-[200px] text-base"
               value={url}
               disabled={pending}

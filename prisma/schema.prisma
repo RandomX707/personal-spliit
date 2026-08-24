@@ -22,7 +22,20 @@ model Group {
   participants Participant[]
   expenses     Expense[]
   activities   Activity[]
+  directGroup  DirectGroup?
   createdAt    DateTime      @default(now())
+}
+
+model Person {
+  id              String        @id
+  displayName     String
+  avatar          String?
+  upiId           String?
+  participants    Participant[]
+  directGroupsAsA DirectGroup[] @relation("DirectGroupPersonA")
+  directGroupsAsB DirectGroup[] @relation("DirectGroupPersonB")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 model Participant {
@@ -30,8 +43,26 @@ model Participant {
   name            String
   group           Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId         String
+  person          Person?          @relation(fields: [personId], references: [id], onDelete: SetNull)
+  personId        String?
   expensesPaidBy  Expense[]
   expensesPaidFor ExpensePaidFor[]
+
+  @@index([personId])
+}
+
+model DirectGroup {
+  id        String   @id
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String   @unique
+  personA   Person   @relation("DirectGroupPersonA", fields: [personAId], references: [id], onDelete: Cascade)
+  personAId String
+  personB   Person   @relation("DirectGroupPersonB", fields: [personBId], references: [id], onDelete: Cascade)
+  personBId String
+  createdAt DateTime @default(now())
+
+  @@unique([personAId, personBId])
+  @@index([personBId])
 }
 
 model Category {

@@ -35,19 +35,19 @@ export function GroupTabs({ groupId }: Props) {
   return (
     <Tabs
       value={value}
-      className="[&>*]:border flex-1 min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       onValueChange={(value) => {
         router.push(`/groups/${groupId}/${value}`)
       }}
     >
-      <TabsList>
+      <TabsList className="h-11 rounded-2xl bg-muted p-1">
         {tabs.map(({ value, label, Icon }) => (
           <TabsTrigger
             key={value}
             value={value}
             title={label}
             aria-label={label}
-            className="gap-2"
+            className="rounded-xl gap-2 data-[state=active]:bg-card data-[state=active]:shadow-sm"
           >
             <Icon className="w-4 h-4" />
             <span className="hidden sm:inline">{label}</span>

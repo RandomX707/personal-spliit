@@ -1,16 +1,16 @@
+import { appConfig } from '@/config/app'
 import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Spliit',
-    short_name: 'Spliit',
-    description:
-      'A minimalist web application to share expenses with friends and family. No ads, no account, no problem.',
-    start_url: '/groups',
-    id: '/groups',
+    name: appConfig.name,
+    short_name: appConfig.shortName,
+    description: appConfig.description,
+    start_url: '/',
+    id: '/',
     display: 'standalone',
-    background_color: '#fff',
-    theme_color: '#047857',
+    background_color: '#f7f4ee',
+    theme_color: '#4f46e5',
     icons: [
       {
         src: '/logo/48x48.png',

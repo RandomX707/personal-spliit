@@ -539,13 +539,16 @@ export function ExpenseForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submit)}>
-        <Card>
-          <CardHeader>
-            <CardTitle>
+        <Card className="ledger-surface overflow-hidden rounded-[2rem]">
+          <CardHeader className="border-b bg-surface-elevated/60">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
+              Expense entry
+            </p>
+            <CardTitle className="text-3xl font-black tracking-[-0.03em]">
               {t(`${sExpense}.${isCreate ? 'create' : 'edit'}`)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid sm:grid-cols-2 gap-6">
+          <CardContent className="grid gap-6 p-5 sm:grid-cols-2 sm:p-6">
             <FormField
               control={form.control}
               name="title"
@@ -806,14 +809,16 @@ export function ExpenseForm({
                   }
                 >
                   <FormLabel>{t('amountField.label')}</FormLabel>
-                  <div className="flex items-baseline gap-2">
-                    <span>{group.currency}</span>
+                  <div className="flex items-center gap-3 rounded-[1.5rem] border bg-surface-elevated p-4">
+                    <span className="text-3xl font-black text-muted-foreground">
+                      {group.currency}
+                    </span>
                     <FormControl>
                       <Input
-                        className="text-base max-w-[120px]"
+                        className="h-14 max-w-[220px] border-0 bg-transparent px-0 text-4xl font-black tracking-[-0.04em] shadow-none focus-visible:ring-0"
                         type="text"
                         inputMode="decimal"
-                        placeholder="0.00"
+                        placeholder="0"
                         onChange={(event) => {
                           const v = enforceCurrencyPattern(event.target.value)
                           const income = Number(v) < 0
@@ -1060,6 +1065,7 @@ export function ExpenseForm({
                                                 id: participant,
                                                 name: '',
                                                 groupId: '',
+                                                personId: null,
                                               },
                                               shares:
                                                 form.watch('splitMode') ===

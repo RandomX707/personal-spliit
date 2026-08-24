@@ -1,55 +1,47 @@
 import { ApplePwaSplash } from '@/app/apple-pwa-splash'
-import { LocaleSwitcher } from '@/components/locale-switcher'
+import { AppShell } from '@/components/app-shell'
 import { ProgressBar } from '@/components/progress-bar'
 import { ServiceWorkerRegistration } from '@/components/service-worker-registration'
 import { ThemeProvider } from '@/components/theme-provider'
-import { ThemeToggle } from '@/components/theme-toggle'
-import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/toaster'
+import { appConfig } from '@/config/app'
 import { Analytics } from '@/lib/analytics/analytics'
 import { getAnalyticsConfig } from '@/lib/analytics/config'
 import { effectiveBaseUrl } from '@/lib/env'
 import { TRPCProvider } from '@/trpc/client'
 import type { Metadata, Viewport } from 'next'
-import { NextIntlClientProvider, useTranslations } from 'next-intl'
-import { getLocale, getMessages, getTranslations } from 'next-intl/server'
-import Image from 'next/image'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import './globals.css'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('Homepage')
   return {
     metadataBase: new URL(effectiveBaseUrl),
     title: {
-      default: t('metaTitle'),
-      template: '%s · Spliit',
+      default: `${appConfig.name} · ${appConfig.tagline}`,
+      template: `%s · ${appConfig.name}`,
     },
-    description:
-      'Spliit is a minimalist web application to share expenses with friends and family. No ads, no account, no problem.',
+    description: appConfig.description,
     openGraph: {
-      title: t('metaTitle'),
-      description:
-        'Spliit is a minimalist web application to share expenses with friends and family. No ads, no account, no problem.',
+      title: `${appConfig.name} · ${appConfig.tagline}`,
+      description: appConfig.description,
       images: `/banner.png`,
       type: 'website',
       url: '/',
     },
     twitter: {
       card: 'summary_large_image',
-      creator: '@scastiel',
-      site: '@scastiel',
       images: `/banner.png`,
-      title: t('metaTitle'),
-      description:
-        'Spliit is a minimalist web application to share expenses with friends and family. No ads, no account, no problem.',
+      title: `${appConfig.name} · ${appConfig.tagline}`,
+      description: appConfig.description,
     },
     appleWebApp: {
       capable: true,
-      title: 'Spliit',
+      title: appConfig.name,
     },
-    applicationName: 'Spliit',
+    applicationName: appConfig.name,
     icons: [
       {
         url: '/android-chrome-192x192.png',
@@ -66,86 +58,29 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#047857',
+  themeColor: '#4f46e5',
 }
 
 function Content({ children }: { children: React.ReactNode }) {
-  const t = useTranslations()
   return (
     <TRPCProvider>
-      <header className="fixed top-0 left-0 right-0 h-16 flex justify-between bg-white dark:bg-gray-950 bg-opacity-50 dark:bg-opacity-50 p-2 border-b backdrop-blur-sm z-50">
-        <Link
-          className="flex items-center gap-2 hover:scale-105 transition-transform"
-          href="/"
-        >
-          <h1>
-            <Image
-              src="/logo-with-text.png"
-              className="m-1 h-auto w-auto"
-              width={(35 * 522) / 180}
-              height={35}
-              alt="Spliit"
-            />
-          </h1>
-        </Link>
-        <div role="navigation" aria-label="Menu" className="flex">
-          <ul className="flex items-center text-sm">
-            <li>
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="-my-3 text-primary"
-              >
-                <Link href="/groups">{t('Header.groups')}</Link>
-              </Button>
-            </li>
-            <li>
-              <LocaleSwitcher />
-            </li>
-            <li>
-              <ThemeToggle />
-            </li>
-          </ul>
-        </div>
-      </header>
-
-      <div className="pt-16 flex-1 flex flex-col">{children}</div>
-
-      <footer className="sm:p-8 md:p-16 sm:mt-16 sm:text-sm md:text-base md:mt-32 bg-slate-50 dark:bg-card border-t p-6 mt-8 flex flex-col sm:flex-row sm:justify-between gap-4 text-xs [&_a]:underline">
-        <div className="flex flex-col space-y-2">
-          <div className="sm:text-lg font-semibold text-base flex space-x-2 items-center">
-            <Link className="flex items-center gap-2" href="/">
-              <Image
-                src="/logo-with-text.png"
-                className="m-1 h-auto w-auto"
-                width={(35 * 522) / 180}
-                height={35}
-                alt="Spliit"
-              />
-            </Link>
-          </div>
-          <div className="flex flex-col space-y a--no-underline-text-white">
-            <span>{t('Footer.madeIn')}</span>
-            <span>
-              {t.rich('Footer.builtBy', {
-                author: (txt) => (
-                  <a href="https://scastiel.dev" target="_blank" rel="noopener">
-                    {txt}
-                  </a>
-                ),
-                source: (txt) => (
-                  <a
-                    href="https://github.com/spliit-app/spliit/graphs/contributors"
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    {txt}
-                  </a>
-                ),
-              })}
-            </span>
-          </div>
+      <AppShell>{children}</AppShell>
+      <footer className="border-t bg-card/70 px-4 py-6 text-xs text-muted-foreground lg:pl-[17rem] xl:pl-72">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            {appConfig.name} is a private fork built from the open-source Spliit
+            project.
+          </span>
+          <span className="flex gap-3 [&_a]:underline">
+            <Link href="/settings#about">About</Link>
+            <a
+              href={appConfig.support.upstreamSource}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open-source attribution
+            </a>
+          </span>
         </div>
       </footer>
       <Toaster />
@@ -167,8 +102,8 @@ export default async function RootLayout({
       dir={['ar', 'he'].includes(locale) ? 'rtl' : 'ltr'}
       suppressHydrationWarning
     >
-      <ApplePwaSplash icon="/logo-with-text.png" color="#047857" />
-      <body className="min-h-[100dvh] flex flex-col items-stretch bg-slate-50 bg-opacity-30 dark:bg-background">
+      <ApplePwaSplash icon="/logo-with-text.png" color="#4f46e5" />
+      <body className="min-h-[100dvh] bg-background antialiased">
         <NextIntlClientProvider messages={messages}>
           {/* Rendered inside the provider because it reads translations via
               `useTranslations`, which needs NextIntlClientProvider in its

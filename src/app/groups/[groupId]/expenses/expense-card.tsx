@@ -2,6 +2,7 @@
 import { ActiveUserBalance } from '@/app/groups/[groupId]/expenses/active-user-balance'
 import { CategoryIcon } from '@/app/groups/[groupId]/expenses/category-icon'
 import { DocumentsCount } from '@/app/groups/[groupId]/expenses/documents-count'
+import { LedgerAmount } from '@/components/ledger-ui'
 import { Button } from '@/components/ui/button'
 import { Locale } from '@/i18n/request'
 import { getGroupExpenses } from '@/lib/api'
@@ -10,7 +11,6 @@ import { cn, formatCurrency, formatDateOnly } from '@/lib/utils'
 import { ChevronRight } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Fragment } from 'react'
 
 type Expense = Awaited<ReturnType<typeof getGroupExpenses>>[number]
@@ -58,7 +58,6 @@ export function ExpenseCard({
   groupId,
   participantCount,
 }: Props) {
-  const router = useRouter()
   const locale = useLocale() as Locale
 
   const originalAmount =
@@ -73,44 +72,53 @@ export function ExpenseCard({
       : null
 
   return (
-    <div
+    <Link
+      href={`/groups/${groupId}/expenses/${expense.id}/edit`}
       key={expense.id}
       data-testid="expense-card"
       data-expense-id={expense.id}
       className={cn(
-        'flex justify-between sm:mx-6 px-4 sm:rounded-lg sm:pr-2 sm:pl-4 py-4 text-sm cursor-pointer hover:bg-accent gap-1 items-stretch',
+        'ledger-list-row grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 text-sm',
         expense.isReimbursement && 'italic',
       )}
-      onClick={() => {
-        router.push(`/groups/${groupId}/expenses/${expense.id}/edit`)
-      }}
     >
-      <CategoryIcon
-        category={expense.category}
-        className="w-4 h-4 mr-2 mt-0.5 text-muted-foreground"
-      />
-      <div className="flex-1">
-        <div className={cn('mb-1', expense.isReimbursement && 'italic')}>
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-primary">
+        <CategoryIcon
+          category={expense.category}
+          className="h-4 w-4 text-primary"
+        />
+      </div>
+      <div className="min-w-0">
+        <div
+          className={cn(
+            'truncate font-black',
+            expense.isReimbursement && 'italic',
+          )}
+        >
           {expense.title}
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="mt-1 truncate text-xs text-muted-foreground">
           <Participants expense={expense} participantCount={participantCount} />
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="mt-1 text-xs font-semibold text-muted-foreground">
           <ActiveUserBalance {...{ groupId, currency, expense }} />
         </div>
       </div>
-      <div className="flex flex-col justify-between items-end">
+      <div className="flex flex-col items-end justify-center">
         <div
           className={cn(
-            'tabular-nums whitespace-nowrap',
+            'money-nums whitespace-nowrap',
             expense.isReimbursement ? 'italic' : 'font-bold',
           )}
         >
-          {formatCurrency(currency, expense.amount, locale)}
+          <LedgerAmount
+            amount={expense.amount}
+            currency={currency}
+            locale={locale}
+          />
         </div>
         {originalAmount && (
-          <div className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+          <div className="money-nums whitespace-nowrap text-xs text-muted-foreground">
             {originalAmount}
           </div>
         )}
@@ -126,11 +134,12 @@ export function ExpenseCard({
         variant="link"
         className="self-center hidden sm:flex"
         asChild
+        tabIndex={-1}
       >
-        <Link href={`/groups/${groupId}/expenses/${expense.id}/edit`}>
+        <span>
           <ChevronRight className="w-4 h-4" />
-        </Link>
+        </span>
       </Button>
-    </div>
+    </Link>
   )
 }
